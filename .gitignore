@@ -1,3 +1,4 @@
-nvenv310/
+venv/
 db.py/
 main.py/
+Data Set/

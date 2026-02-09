@@ -10,11 +10,11 @@ from pathlib import Path
 DIR = Path(__file__).resolve().parent
 
 # Load CSV
-csv_path = str(DIR / "face_pose_data.csv")
+csv_path = str(DIR / "csv files/head_pose.csv")
 data = pd.read_csv(csv_path)
 
-X = data[["yaw", "pitch"]]
-y = data["label"]
+X = data[["Roll", "Pitch", "Yaw"]]
+y = data["Label"]
 
 num_rows = len(y)
 
@@ -27,8 +27,8 @@ svm = SVC(kernel="rbf")
 svm.fit(X_scaled, y)
 
 # Save model and scaler
-joblib.dump(svm, "svm_model.pkl")
-joblib.dump(scaler, "scaler.pkl")
+joblib.dump(svm, str(DIR.parent / "Models/3featuresSVM/svm_model.pkl"))
+joblib.dump(scaler, str(DIR.parent / "Models/3featuresSVM/scaler.pkl"))
 
 root = tk.Tk()
 root.withdraw()  # hide the main window

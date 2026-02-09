@@ -107,46 +107,6 @@ class StudentController:
         else:
            return JSONResponse(content={"content": "null"}, status_code=404)
         
-    @staticmethod
-    def fetch_mcqs(db: Session, exam_id: int):
-
-        rows = db.query(
-            ExamMCQ.ID.label("mcqID"),
-            ExamMCQ.DESCRIPTION.label("question"),
-            MCQOption.ID.label("optionID"),
-            MCQOption.OPTION_TEXT.label("optionText"),
-            MCQOption.IS_CORRECT.label("isCorrect")
-        ).join(
-            MCQOption, ExamMCQ.ID == MCQOption.M_ID
-        ).filter(
-            ExamMCQ.E_ID == exam_id
-        ).all()
-
-        if not rows:
-            return JSONResponse(content={"content": []}, status_code=404)
-
-        mcq_map = {}
-
-        for row in rows:
-            if row.mcqID not in mcq_map:
-                mcq_map[row.mcqID] = {
-                    "mcqID": row.mcqID,
-                    "question": row.question,
-                    "options": []
-                }
-
-            mcq_map[row.mcqID]["options"].append({
-                "mcqID": row.mcqID,
-                "optionID": row.optionID,
-                "text": row.optionText,
-                "isCorrect": row.isCorrect
-            })
-
-        return {
-            "content": list(mcq_map.values())
-        }
-
-        
     # def fetch_mcqs(db: Session, exam_id: int):
     #     result = db.query(
     #         ExamMCQ.ID.label("mcqID"),

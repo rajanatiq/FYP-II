@@ -17,7 +17,6 @@ async def CameraMonitoring(file: UploadFile = File(...),db: Session=Depends(get_
 @router.post('/AddProctoringEvent')
 async def proctoring_event(file: UploadFile = File(...), EX_ID: int = Form(...),
     S_ID: int = Form(...), db: Session=Depends(get_db)):
-    
     return await ProctoringController.proctoring_event(file, EX_ID, S_ID, db)
 
 @router.get("/studentViolationCount/{std_id}")

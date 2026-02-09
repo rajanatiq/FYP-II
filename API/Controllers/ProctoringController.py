@@ -12,26 +12,36 @@ import cv2
 # tarined models for prediction
 from ML.FaceCount.faceCount import FaceCounter
 from ML.pose_estimation_yaw_pitch.Training.predict_pose import PoseEstimation
-
+from ML.PoseEstimationPivot.PoseEstimation import PoseEstimationClass
 counter = FaceCounter()
 predict = PoseEstimation()
 
 class ProctoringController:
     
     @staticmethod
-    # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
     async def FaceProctoring(file: UploadFile):
-        contents = await file.read()  # bytes
-        np_array = np.frombuffer(contents, np.uint8)
+        content = await file.read()
+        np_array = np.frombuffer(content, np.uint8)
         image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+
+        pose = PoseEstimationClass.process_face(image)
+        return {"pose": pose}
+
+    # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
+
+    # MARK: Predict Pose using SVM ->
+    # async def FaceProctoring(file: UploadFile):
+    #     contents = await file.read()  # bytes
+    #     np_array = np.frombuffer(contents, np.uint8)
+    #     image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
         
-        if image is None:
-            return {"error": "can not decode image"}
+    #     if image is None:
+    #         return {"error": "can not decode image"}
         
-        pose = predict.predict_pose(image)
-        print(pose)
+    #     pose = predict.predict_pose(image)
+    #     print(pose)
          
-        return {"face pose": pose}
+    #     return {"face pose": pose}
     
     
     @staticmethod

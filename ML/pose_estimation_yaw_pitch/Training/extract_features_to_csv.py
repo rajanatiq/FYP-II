@@ -7,7 +7,6 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent
 
-
 # Initialize MediaPipe FaceMesh
 mp_face = mp.solutions.face_mesh.FaceMesh(static_image_mode=True)
 
