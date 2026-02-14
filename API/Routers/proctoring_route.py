@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from db import get_db
 router = APIRouter()
 
-
 @router.post('/FaceMonitoring')
 # async def CameraMonitoring(file: UploadFile = File(...), EX_ID: int = Form(...), S_ID: int = Form(...), db: Session=Depends(get_db)):
 async def CameraMonitoring(file: UploadFile = File(...),db: Session=Depends(get_db)):

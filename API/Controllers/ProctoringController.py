@@ -13,6 +13,8 @@ import cv2
 from ML.FaceCount.faceCount import FaceCounter
 from ML.pose_estimation_yaw_pitch.Training.predict_pose import PoseEstimation
 from ML.PoseEstimationPivot.PoseEstimation import PoseEstimationClass
+from ML.faceCount import FaceCounter
+
 counter = FaceCounter()
 predict = PoseEstimation()
 
@@ -24,8 +26,15 @@ class ProctoringController:
         np_array = np.frombuffer(content, np.uint8)
         image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-        pose = PoseEstimationClass.process_face(image)
-        return {"pose": pose}
+        face_count = counter.faceCount(image=image)
+
+        if face_count > 1:
+            return {"pose": "Multiple faces detected"}
+        elif face_count == 0:
+            return {"pose": "No face detected"}
+        else:
+            pose = PoseEstimationClass.process_face(image)
+            return {"pose": pose}
 
     # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
 
