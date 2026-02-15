@@ -46,7 +46,7 @@ def train_students():
 
         save_path = os.path.join(
             EMBEDDINGS_DIR,
-            f"student_{student_id}.npy"
+            f"{student_id}.npy"
         )
 
         np.save(save_path, avg_embedding)
