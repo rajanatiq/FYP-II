@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+
 # Get the path to the 'API' folder (one level up from main.py)
 root_path = Path(__file__).resolve().parent.parent
 sys.path.append(str(root_path))
@@ -19,6 +20,8 @@ import Models
 
 # ---------------- FastAPI instance ----------------
 app = FastAPI(title="FYP Project API")
+
+
 
 # allows the request from frontEnd or Postman
 origins = ["*"] 

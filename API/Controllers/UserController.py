@@ -6,6 +6,7 @@ import os
 import shutil
 from deepface import DeepFace
 from sklearn.metrics.pairwise import cosine_similarity
+from API.model_loader import model
 class UserController:
 
     @staticmethod
