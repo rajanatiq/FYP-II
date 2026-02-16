@@ -1,4 +1,5 @@
-venv/
+.venv/
+venv11/
 db.py/
 main.py/
 Data Set/

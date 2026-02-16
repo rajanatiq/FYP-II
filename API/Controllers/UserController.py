@@ -52,10 +52,15 @@ class UserController:
     #         return {"error": f"Database error: {str(e)}"}, 500
 
 
+
     @staticmethod
     def checkLogin(file: UploadFile, id: int, db: Session):
+        from pathlib import Path
+
+        DIR = Path(__file__).resolve().parent.parent.parent
+        print(DIR)
         TEMP_IMAGE = "temp.jpg"
-        EMBEDDINGS_DIR = r"D:\FYP-II\StoredEmbeddings"
+        EMBEDDINGS_DIR = str(DIR /"StoredEmbeddings")
         THRESHOLD = 0.65
 
         # Save uploaded image
