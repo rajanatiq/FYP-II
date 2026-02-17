@@ -69,7 +69,7 @@ class UserController:
             ).first()
     
             if user is None:
-                return {"error": "No User Found"}
+                return {"status": "error", "details": "No User Found"}
             else:
                 userId, role, name = user
     
@@ -121,16 +121,16 @@ class UserController:
                         id = getID[0]
         
                     return {
-                        "success": True,
+                        "status": "success",
                         "id": id,
                         "userID": userId,
                         "role": role,
                         "name": name
                         }
                 else:
-                    return {"error": "Face not Matched"}
+                    return {"status": "error", "detail": "Face not matched"}
                 
         except Exception as e:
             print("database error")
-            return {"error": f"Database error: {str(e)}"}, 500
+            return {"status": "error", "detail": f"Database error: {str(e)}"}
         # Save uploaded image

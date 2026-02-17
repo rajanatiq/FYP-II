@@ -34,3 +34,4 @@ def delete_exam(id: int, db: Session = Depends(get_db)):
 @router.get('/fetchMcqs/{exam_id}')
 def fetch_mcqs(exam_id: int, db:Session=Depends(get_db)):
     return ExamController.fetch_mcqs(db, exam_id)
+

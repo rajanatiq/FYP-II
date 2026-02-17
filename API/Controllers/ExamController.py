@@ -56,8 +56,7 @@ class ExamController:
             TITLE=data.TITLE,
             TOTAL_QUESTIONS=data.TOTAL_QUESTIONS,
             E_DATE=data.E_DATE,
-            START_TIME=data.START_TIME,
-            END_TIME=data.END_TIME,
+            timeInMinutes=data.timeInMinutes,
             E_TYPE=data.E_TYPE,
             STATUS=data.STATUS
         )

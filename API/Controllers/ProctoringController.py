@@ -22,6 +22,7 @@ class ProctoringController:
     
     @staticmethod
     async def FaceProctoring(file: UploadFile):
+        print("checking face.")
         content = await file.read()
         np_array = np.frombuffer(content, np.uint8)
         image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
@@ -31,11 +32,17 @@ class ProctoringController:
         if face_count > 1:
             return {"pose": "Multiple faces detected"}
         elif face_count == 0:
+            print("No face deteced.")
             return {"pose": "No face detected"}
         else:
             pose = PoseEstimationClass.process_face(image)
+            print(f"pose= {pose}")
             return {"pose": pose}
 
+    @staticmethod
+    async def VoiceProctoring(file: UploadFile, db: Session):
+        audio_bytes = await file.read()
+        return
     # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
 
     # MARK: Predict Pose using SVM ->

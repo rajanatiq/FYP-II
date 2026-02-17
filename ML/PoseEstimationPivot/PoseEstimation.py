@@ -114,16 +114,3 @@ class PoseEstimationClass:
             pose = PoseEstimationClass.estimate_face_pose(nose_norm, left_cheek_norm, right_cheek_norm)
             
             return pose
-
-    @staticmethod
-    def faceCount(image):
-        mp_face = mp.solutions.face_detection
-        face_detection = mp_face.FaceDetection(model_selection = 0, min_detection_confidence = 0.6)
-
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = face_detection.process(img)
-
-        if results.detections:
-            return len(results.detections)
-        else:
-            return 0

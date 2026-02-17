@@ -6,7 +6,6 @@ class ExamCreate(BaseModel):
     TITLE: str
     TOTAL_QUESTIONS: int
     E_DATE: datetime
-    START_TIME: str
-    END_TIME: str
+    timeInMinutes: int
     E_TYPE: str
     STATUS: str
