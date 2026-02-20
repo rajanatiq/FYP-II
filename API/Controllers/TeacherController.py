@@ -1,9 +1,67 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import extract, func
+from datetime import datetime
+from fastapi.responses import JSONResponse
+
 # import Models
-from Models import (CourseAllocation,CourseOffering, Course, Teacher, Users)
+from Models import (CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department)
 
 
 class TeacherController:
+    
+    @staticmethod
+    def teacherAllocatedCourses(t_id: int, session: str ,db:Session):
+        current_year = datetime.now().year
+        try:
+            result = db.query(
+                CourseAllocation.ID.label('allocationID'), 
+                CourseOffering.ID.label('offeringID'),
+                Course.ID.label('courseID'),
+                Section.ID.label('sectionID'),
+                Section.name.label('section'),
+                Department.name.label('depName'),
+                Course.COURSE_CODE.label('courseCode'),
+                Course.Title.label('courseTitle'),
+                CourseOffering.Semester.label('semester'),
+                func.year(CourseAllocation.AllocationDate)
+            ).join(
+                CourseOffering, CourseOffering.ID == CourseAllocation.ID
+            ).join(
+                Course, Course.ID == CourseOffering.CourseID
+            ).join(
+                Section, Section.ID == CourseAllocation.SECTION
+            ).join(
+                Teacher, Teacher.ID == CourseAllocation.TeacherID
+            ).join(
+                Department, Department.ID == CourseOffering.DEPARTMENT
+            ).join(
+                Users, Users.ID == Teacher.userID
+            ).filter(
+                Teacher.ID == t_id, 
+                extract('year', CourseAllocation.AllocationDate) == current_year, 
+                CourseOffering.SESSION == session
+            ).all()
+            
+            if not result:
+                return {'error': 'no courses found'}
+            else:
+                courses = [
+                    {
+                        'allocationID': row.allocationID,
+                        'offeringID': row.offeringID,
+                        'courseID': row.courseID, 
+                        'sectionID': row.sectionID,
+                        'department': row.depName,
+                        'section': row.section,
+                        'semester': row.semester,
+                        'coruseCode': row.courseCode,
+                        'courseTitle': row.courseTitle
+                    }
+                for row in result   
+                ]
+                return courses
+        except Exception as e:
+            return {'error': f"Database Error: {str(e)}"}
     
     @staticmethod
     def course_allocation_id(course_id: int, teacher_id: int, db: Session):
