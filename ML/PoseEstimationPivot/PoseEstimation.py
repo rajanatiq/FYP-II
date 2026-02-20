@@ -46,7 +46,8 @@ class PoseEstimationClass:
         h, w, _ = image.shape
 
         with mp_face_mesh.FaceMesh(
-            static_image_mode=True,
+            static_image_mode=True, \
+
             max_num_faces=1,
             refine_landmarks=True
         ) as face_mesh:

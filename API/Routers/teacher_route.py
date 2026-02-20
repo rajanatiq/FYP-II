@@ -13,4 +13,5 @@ def course_allocation(course_id: int, teacher_id: int, db: Session = Depends(get
 
 @router.get('/teacherCourses/{teacherID}/{session}')
 def teacherCourses(teacherID: int, session: str, db: Session = Depends(get_db)):
-    return TeacherController.teacherAllocatedCourses(teacherID, session, db)
+    return TeacherController.teacherAllocatedCourses(teacherID, session, db)\
+

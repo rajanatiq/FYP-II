@@ -34,13 +34,15 @@ app.add_middleware(
     allow_headers=["*"],         
 )
 
-app.include_router(user_route.router)
-app.include_router(student_route.router)
-app.include_router(admin_route.router)
-app.include_router(exam_route.router)
-app.include_router(proctoring_route.router)
-app.include_router(teacher_route.router)
-# app.include_router(voice_route.router)
+# app.include_router(user_route.router)
+# app.include_router(student_route.router)
+# app.include_router(admin_route.router)
+# app.include_router(exam_route.router)
+# app.include_router(proctoring_route.router)
+# app.include_router(teacher_route.router)
+#app.include_router(voice_route.router)
+
+
 
 @app.on_event("startup")
 def startup_event():

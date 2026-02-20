@@ -6,6 +6,8 @@ from fastapi.responses import JSONResponse
 # import Models
 from Models import (CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department)
 
+from API.Models import Exam
+
 
 class TeacherController:
     
@@ -82,6 +84,11 @@ class TeacherController:
         except Exception as e:
             db.rollback()
             return {"error": f"Database error: {str(e)}"}, 500
+
+    #
+
+
+
 
 
 # select CA.ID from CourseOffering CF
