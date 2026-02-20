@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="" />
+    <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/StoredEmbeddings/5051.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/Controllers/TeacherController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/TeacherController.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/temp.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/API/temp.jpg" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,11 +43,14 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/FYP-II",
+    "last_opened_file_path": "D:/FYP-II/StoredEmbeddings",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\FYP-II\StoredEmbeddings" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\FYP-II\API" />
     </key>

@@ -6,7 +6,7 @@ from Models import (CourseAllocation,CourseOffering, Course, Teacher, Users)
 class TeacherController:
     
     @staticmethod
-    def course_allocation_id(course_id: int, teacher_id: int, db: Session):
+    def course_allocation_id(teacher_id: int, db: Session):
         try:
             allocation = db.query(
                 CourseAllocation.ID
@@ -14,7 +14,7 @@ class TeacherController:
                 join(Course, Course.ID == CourseOffering.CourseID).\
                 join(Teacher, Teacher.ID == CourseAllocation.TeacherID).\
                 join(Users, Users.ID == Teacher.userID).\
-                filter(Course.ID == course_id, Teacher.ID == teacher_id).first()
+                filter(Course.ID == course_id, Teacher.ID == teacher_id).all()
 
             if allocation:
                 return {"CourseAllocationID": allocation.ID}
