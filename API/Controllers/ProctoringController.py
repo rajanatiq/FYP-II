@@ -1,6 +1,10 @@
 from datetime import datetime
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
+import time
+from pathlib import Path
+
+root_dir = Path(__file__).resolve().parent.parent
 
 # import Models
 from Models import (ProctoringEvent,CameraMonitoring, ScreenMonitoring)
@@ -22,7 +26,6 @@ class ProctoringController:
     
     @staticmethod
     async def FaceProctoring(file: UploadFile):
-        print("checking face.")
         content = await file.read()
         np_array = np.frombuffer(content, np.uint8)
         image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
@@ -40,8 +43,12 @@ class ProctoringController:
             return {"pose": pose}
 
     @staticmethod
-    async def VoiceProctoring(file: UploadFile, db: Session):
+    async def VoiceProctoring(file: UploadFile):
         audio_bytes = await file.read()
+        if audio_bytes is not None:
+            timeStamp = ProctoringController.getTimeStamp()
+            dir_path = str(root_dir / f"Assets/Audio/VoiceMonitoring/{timeStamp}.m4a")
+            ProctoringController.saveFileOnServer(audio_bytes, dir_path)
         return
     # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
 
@@ -163,3 +170,15 @@ class ProctoringController:
             }
         except Exception as e:
             return {"error": f"Error: {str(e)}"}, 500
+
+    @staticmethod
+    def saveFileOnServer(data: bytes, path: str):
+        with open(path, "wb") as f:
+            f.write(data)
+        return
+    @staticmethod
+    def getTimeStamp():
+        current_timestamp = time.time()
+        local_time = time.localtime(current_timestamp)
+        readable_time = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+        return readable_time

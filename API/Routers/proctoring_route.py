@@ -9,9 +9,13 @@ from db import get_db
 router = APIRouter()
 
 @router.post('/FaceMonitoring')
-async def CameraMonitoring(file: UploadFile = File(...),db: Session=Depends(get_db)):
+async def FaceMonitoring(file: UploadFile = File(...),db: Session=Depends(get_db)):
     return await ProctoringController.FaceProctoring(file)
 
+@router.post('/voiceMonitoring')
+async def voiceMonitoring(file: UploadFile = File(...), db: Session=Depends(get_db)):
+    return await ProctoringController.VoiceProctoring(file)
+    
 @router.post('/AddProctoringEvent')
 async def proctoring_event(file: UploadFile = File(...), EX_ID: int = Form(...),
     S_ID: int = Form(...), db: Session=Depends(get_db)):

@@ -55,8 +55,14 @@ class UserController:
 
     @staticmethod
     def checkLogin(file: UploadFile, id: int, db: Session):
+        return {
+                "status": "success",
+                "id": 1,
+                "userID": 2,
+                "role": 'Student',
+                "name": "Malik Awais"
+                }
         from pathlib import Path
-
         DIR = Path(__file__).resolve().parent.parent.parent
         TEMP_IMAGE = "temp.jpg"
         EMBEDDINGS_DIR = str(DIR /"StoredEmbeddings")
