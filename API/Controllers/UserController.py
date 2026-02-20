@@ -55,13 +55,6 @@ class UserController:
 
     @staticmethod
     def checkLogin(file: UploadFile, id: int, db: Session):
-        return {
-                "status": "success",
-                "id": 1,
-                "userID": 2,
-                "role": 'Student',
-                "name": "Malik Awais"
-                }
         from pathlib import Path
         DIR = Path(__file__).resolve().parent.parent.parent
         TEMP_IMAGE = "temp.jpg"
@@ -110,8 +103,6 @@ class UserController:
                     [live_embedding],
                     [saved_embedding]
                 )[0][0]
-
-                print("Similarity:", similarity)
 
                 if similarity > THRESHOLD:
                     id = 0
