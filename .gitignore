@@ -3,3 +3,5 @@ venv11/
 db.py/
 main.py/
 Data Set/
+__pycache__/
+*.pyc
