@@ -4,6 +4,9 @@
     <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/Controllers/TeacherController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/TeacherController.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/Routers/teacher_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/teacher_route.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/temp.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/API/temp.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

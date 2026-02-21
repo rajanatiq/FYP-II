@@ -86,16 +86,27 @@ class TeacherController:
 
     @staticmethod
     def fetch_allocated_courses_exams(teacher_id: int , db:Session):
-        db.query( Exam.ID.label("examID"),
+        result=db.query( Exam.ID.label("examID"),
                   Exam.TITLE.label('examTitle'),
                   Exam.STATUS.label('examStatus')
                  ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
-                 ).join(CourseOffering, CourseOffering.ID==CourseAllocation.OfferingID
                  ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
-                 ).join(Course, Course.ID==CourseAllocation.CourseID
                  ).filter(
             Teacher.ID == teacher_id
         ).all()
+        if not result:
+            return {'error': 'no exams  found'}
+        else:
+            return [
+                {
+                    "examID": exam.examID,
+                    "examTitle": exam.examTitle,
+                    "examStatus": exam.examStatus
+                }
+                for exam in result
+            ]
+
+
 
 
 
