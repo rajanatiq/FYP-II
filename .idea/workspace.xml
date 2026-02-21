@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/TeacherController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/TeacherController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Routers/teacher_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/teacher_route.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/main.py" afterDir="false" />
+    <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="hsdg">
       <change beforePath="$PROJECT_DIR$/API/temp.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/API/temp.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -70,6 +66,19 @@
       <option name="presentableId" value="Default" />
       <updated>1770105596002</updated>
     </task>
+    <task id="LOCAL-00001" summary="hsdg">
+      <option name="closed" value="true" />
+      <created>1771641292139</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1771641292139</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="hsdg" />
+    <option name="LAST_COMMIT_MESSAGE" value="hsdg" />
   </component>
 </project>
