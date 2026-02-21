@@ -4,9 +4,8 @@ from datetime import datetime
 from fastapi.responses import JSONResponse
 
 # import Models
-from Models import (CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department)
+from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department)
 
-from API.Models import Exam
 
 
 class TeacherController:
@@ -85,7 +84,20 @@ class TeacherController:
             db.rollback()
             return {"error": f"Database error: {str(e)}"}, 500
 
-    #
+    @staticmethod
+    def fetch_allocated_courses_exams(teacher_id: int , db:Session):
+        db.query( Exam.ID.label("examID"),
+                  Exam.TITLE.label('examTitle'),
+                  Exam.STATUS.label('examStatus')
+                 ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
+                 ).join(CourseOffering, CourseOffering.ID==CourseAllocation.OfferingID
+                 ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
+                 ).join(Course, Course.ID==CourseAllocation.CourseID
+                 ).filter(
+            Teacher.ID == teacher_id
+        ).all()
+
+
 
 
 
