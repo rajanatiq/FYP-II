@@ -1,5 +1,5 @@
 from db import Base
-from sqlalchemy import Column, Integer, ForeignKey, Date
+from sqlalchemy import Column, Integer, ForeignKey, Date, String
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -11,6 +11,7 @@ class CourseAllocation(Base):
     OfferingID = Column(Integer, ForeignKey('courseoffering.ID'), nullable=False)
     SECTION = Column(Integer, ForeignKey('section.ID'))
     AllocationDate = Column(Date, default=datetime.utcnow)
+    status = Column(String(20))
 
     # Previous Relationships
     teacher_rship = relationship('Teacher', back_populates='allocation_rship')
