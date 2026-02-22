@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import extract, func
+from sqlalchemy import extract, func, distinct
 from datetime import datetime
 from fastapi.responses import JSONResponse
 
 # import Models
-from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department)
+from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt)
 
 
 
@@ -86,23 +86,35 @@ class TeacherController:
 
     @staticmethod
     def fetch_allocated_courses_exams(teacher_id: int , db:Session):
-        result=db.query( Exam.ID.label("examID"),
-                  Exam.TITLE.label('examTitle'),
-                  Exam.STATUS.label('examStatus')
+        result=db.query( 
+                    CourseAllocation.ID.label('allocationID'), 
+                    Exam.ID.label("examID"),
+                    Exam.TITLE.label('examTitle'),
+                    Exam.STATUS.label('examStatus'),
+                    func.count(distinct(ExamAttempt.studentID)).label('appearedStudents')
                  ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
                  ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
+                 ).outerjoin(ExamAttempt, ExamAttempt.examID == Exam.ID
                  ).filter(
-            Teacher.ID == teacher_id,
-            CourseAllocation.status == 'allocated'
-        ).all()
+                    Teacher.ID == teacher_id,
+                    CourseAllocation.status == 'allocated'
+                ).group_by(
+                    CourseAllocation.ID,
+                    Exam.ID,
+                    Exam.TITLE,
+                    Exam.STATUS
+                ).all()
+                 
         if not result:
             return {'error': 'no exams  found'}
         else:
             return [
                 {
+                    "allocationID": exam.allocationID,
                     "examID": exam.examID,
                     "examTitle": exam.examTitle,
-                    "examStatus": exam.examStatus
+                    "examStatus": exam.examStatus,
+                    "appearedStudents": exam.appearedStudents
                 }
                 for exam in result
             ]

@@ -7,11 +7,11 @@ class MCQAns(Base):
 
     ID = Column(Integer, primary_key=True, index=True)
     M_ID = Column(Integer, ForeignKey('exammcq.ID'))
-    S_ID = Column(Integer, ForeignKey('student.StudentID'))
     O_ID = Column(Integer,ForeignKey('mcqoption.ID'))
+    attemptID = Column(Integer, ForeignKey('examattempt.ID'))
 
     # Relationships
     question_rship = relationship('ExamMCQ', back_populates='ans_rship')
-    student_rship = relationship('Student', back_populates='mcq_ans_rship')
     option_rship=relationship('MCQOption',back_populates='mcq_rship')
     
+    examAttempt_rship = relationship('ExamAttempt', back_populates='mcqAns_rship') #

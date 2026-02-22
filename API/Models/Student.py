@@ -19,8 +19,6 @@ class Student(Base):
     enrollment_rship = relationship('CourseEnrollment', back_populates='student_rship')
 
     # NEW Relationships (Exam & Proctoring)
-    mcq_ans_rship = relationship('MCQAns', back_populates='student_rship') #
-    des_ans_rship = relationship('DesAns', back_populates='student_rship') #
     proctoring_rship = relationship('ProctoringEvent', back_populates='student_rship') #
     seatings_rship = relationship('StudentSeating', back_populates='student_rship')
 

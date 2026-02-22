@@ -23,3 +23,4 @@ from .TeacherRoomAssignment import *
 from .StudentSeating import *
 from .StudentBreak import *
 from .ExamRoom import *
+from .ExamAttempt import *
