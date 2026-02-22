@@ -19,3 +19,6 @@ def teacherCourses(teacherID: int, session: str, db: Session = Depends(get_db)):
 def teacherExams(teacherID: int, db: Session = Depends(get_db)):
     return TeacherController.fetch_allocated_courses_exams(teacherID, db)
 
+@router.get('/studentsAppearedInExam/{exam_id}')
+def studentsInExam(exam_id: int, db:Session = Depends(get_db)):
+    return TeacherController.appearedStudentsinExam(exam_id, db)

@@ -4,9 +4,7 @@ from datetime import datetime
 from fastapi.responses import JSONResponse
 
 # import Models
-from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt)
-
-
+from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student)
 
 class TeacherController:
     
@@ -123,14 +121,43 @@ class TeacherController:
                 for exam in result
             ]
             
-
-
-
-
-
-
-
-
+    @staticmethod 
+    def appearedStudentsinExam(exam_id: int, db: Session):
+        try:
+            result = (
+                db.query(
+                    Student.StudentID.label("studentID"),
+                    Users.Name.label("studentName"),
+                    Users.identity_no.label("identityNo"),
+                    func.concat(Department.name, "-", Section.name).label("section")
+                )
+                .select_from(ExamAttempt)
+                .join(Exam, Exam.ID == ExamAttempt.examID)
+                .join(Student, Student.StudentID == ExamAttempt.studentID)
+                .join(Users, Users.ID == Student.userID)
+                .join(Section, Section.ID == Student.Section)
+                .join(Department, Department.ID == Section.department)
+                .filter(ExamAttempt.examID == exam_id)
+                .all()
+            )
+            
+            if not result:
+                return {'error': 'no exams  found'}
+            else:
+                students = [
+                    {
+                        "studentID": std.studentID,
+                        "studentName": std.studentName,
+                        "identityNo": std.identityNo,
+                        "section": std.section
+                    }
+                    for std in result
+                ]
+                return {"success": students}
+            
+        except Exception as e:
+            db.rollback()
+            return {"error": f"Database error: {str(e)}"}, 500
 
 # select CA.ID from CourseOffering CF
 # JOIN CourseAllocation CA on CA.OfferingID = Cf.ID
