@@ -55,12 +55,12 @@ class TeacherController:
                         'department': row.depName,
                         'section': row.section,
                         'semester': row.semester,
-                        'coruseCode': row.courseCode,
+                        'courseCode': row.courseCode,
                         'courseTitle': row.courseTitle
                     }
                 for row in result   
                 ]
-                return courses
+                return JSONResponse(content={"courses": courses})
         except Exception as e:
             return {'error': f"Database Error: {str(e)}"}
     
@@ -118,6 +118,7 @@ class TeacherController:
                 }
                 for exam in result
             ]
+            
 
 
 
