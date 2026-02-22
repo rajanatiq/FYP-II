@@ -93,7 +93,7 @@ class TeacherController:
                  ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
                  ).filter(
             Teacher.ID == teacher_id,
-            Teacher.status == 'allocated'
+            CourseAllocation.status == 'allocated'
         ).all()
         if not result:
             return {'error': 'no exams  found'}
