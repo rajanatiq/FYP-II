@@ -91,6 +91,7 @@ class TeacherController:
                     Exam.ID.label("examID"),
                     Exam.TITLE.label('examTitle'),
                     Exam.STATUS.label('examStatus'),
+                    Exam.E_DATE.label('examDate'),
                     func.count(distinct(ExamAttempt.studentID)).label('appearedStudents')
                  ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
                  ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
@@ -102,7 +103,8 @@ class TeacherController:
                     CourseAllocation.ID,
                     Exam.ID,
                     Exam.TITLE,
-                    Exam.STATUS
+                    Exam.STATUS, 
+                    Exam.E_DATE
                 ).all()
                  
         if not result:
@@ -112,9 +114,11 @@ class TeacherController:
                 {
                     "allocationID": exam.allocationID,
                     "examID": exam.examID,
+                    "examDate": exam.examDate,
                     "examTitle": exam.examTitle,
                     "examStatus": exam.examStatus,
                     "appearedStudents": exam.appearedStudents
+                    
                 }
                 for exam in result
             ]
