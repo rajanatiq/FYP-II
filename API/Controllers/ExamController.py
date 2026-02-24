@@ -1,14 +1,16 @@
 from typing import List
-from Models import MCQOption
-from Models import ExamDescQues
+
+from Models import (ExamAttempt, MCQOption, ExamDescQues, ExamMCQ, Exam)
+# from Models import MCQOption
+# from Models import ExamDescQues
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from Models.Exam import Exam
+# from Models.Exam import Exam
 from Schemas.ExamCreate import ExamCreate
 from Schemas.ExamMcqCreate import ExamMCQCreate, MCQOptionCreate
-
-from Models.ExamMCQ import ExamMCQ
+from Schemas.AttemptedExam import AttemptedExam
+# from Models.ExamMCQ import ExamMCQ
 
 class ExamController:
     @staticmethod
@@ -162,3 +164,37 @@ class ExamController:
         
         except Exception as e:
             return {"error": f"Cannot delete: {str(e)}"}, 500
+
+    @staticmethod
+    def addStudentExamEntry(data: AttemptedExam , db:Session):
+        """This method is for adding the student record in the examattempt table after joining the exam."""
+        attemptRecord = ExamAttempt(
+            studentID= data.s_id,
+            examID = data.e_id
+        )
+        try:
+            db.add(attemptRecord)
+            db.commit()
+            return {"success": True}
+        except Exception as e:
+            db.rollback()
+            return {"fail": f"{e}"}
+        
+    @staticmethod
+    def ifExamAlreadyAttempt(data: AttemptedExam, db:Session):
+        """method to check if student has already attempted his exam or not to prevent duplication"""
+        try:
+            record = db.query(ExamAttempt).filter(
+                ExamAttempt.studentID == data.s_id,
+                ExamAttempt.examID == data.e_id
+            ).first()
+            
+            if record:
+                return {"success": True}
+            else:
+                return {"success": False}
+        except Exception as e:
+            return {"fail": "data base error. trya again."}
+    
+
+        

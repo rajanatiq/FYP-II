@@ -6,7 +6,7 @@ class ExamAttempt(Base):
     __tablename__ = 'examattempt'
 
     ID = Column(Integer, primary_key=True)
-    studentID = Column(Integer, ForeignKey('student.studentID'), nullable=False)
+    studentID = Column(Integer, ForeignKey('student.StudentID'), nullable=False)
     examID = Column(Integer, ForeignKey('exam.ID'), nullable=False)
 
     

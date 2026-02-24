@@ -142,7 +142,7 @@ class TeacherController:
             )
             
             if not result:
-                return {'error': 'no exams  found'}
+                return {'error': 'no student found'}
             else:
                 students = [
                     {
