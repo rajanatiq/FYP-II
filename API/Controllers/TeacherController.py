@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import extract, func, distinct, case
+from sqlalchemy import extract, func, distinct, case, cast, Time
 from datetime import datetime
 from fastapi.responses import JSONResponse
-
+from Schemas.StudentLog import StudentLog
 # import Models
 from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog)
 
@@ -161,7 +161,7 @@ class TeacherController:
 
 
     @staticmethod
-    def getStudentLogs(std_id: int, exam_id: int, db:Session):
+    def getStudentLogs(data: StudentLog, db:Session):
         # SELECT
         #     count(*) as total_entry,
         #     SUM(CASE WHEN position = 'right' THEN 1 ELSE 0 END) AS right_count,
@@ -179,6 +179,7 @@ class TeacherController:
         # WHERE ea.studentID = 1 and ea.examID = 2
         try:
             result = db.query( 
+                func.count().label('total'),
                 func.sum(case((StudentExamLog.position == 'straight', 1), else_= 0)).label('straight'),
                 func.sum(case((StudentExamLog.position == 'left', 1), else_= 0)).label('left'),
                 func.sum(case((StudentExamLog.position == 'right', 1), else_= 0)).label('right'),
@@ -194,12 +195,14 @@ class TeacherController:
             ).join(
                 Exam, Exam.ID == ExamAttempt.examID
             ).filter(
-                ExamAttempt.studentID == std_id,
-                ExamAttempt.examID == exam_id
+                ExamAttempt.studentID == data.std_id,
+                ExamAttempt.examID == data.exam_id, 
+                cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
             ).first()
             
             if result: 
                 record = {
+                    'total': result.total,
                     'straight': result.straight,
                     'left': result.left,
                     'right': result.right,
