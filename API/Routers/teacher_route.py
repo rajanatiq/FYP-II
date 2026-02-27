@@ -22,3 +22,7 @@ def teacherExams(teacherID: int, db: Session = Depends(get_db)):
 @router.get('/studentsAppearedInExam/{exam_id}')
 def studentsInExam(exam_id: int, db:Session = Depends(get_db)):
     return TeacherController.appearedStudentsinExam(exam_id, db)
+
+@router.get('/getStudentExamLog/{s_id}/{e_id}')
+def getStudentExamLog(s_id: int, e_id: int, db:Session = Depends(get_db)):
+    return TeacherController.getStudentLogs(s_id, e_id, db)

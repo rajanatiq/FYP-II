@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import extract, func, distinct
+from sqlalchemy import extract, func, distinct, case
 from datetime import datetime
 from fastapi.responses import JSONResponse
 
 # import Models
-from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student)
+from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog)
 
 class TeacherController:
     
@@ -159,6 +159,63 @@ class TeacherController:
             db.rollback()
             return {"error": f"Database error: {str(e)}"}, 500
 
+
+    @staticmethod
+    def getStudentLogs(std_id: int, exam_id: int, db:Session):
+        # SELECT
+        #     count(*) as total_entry,
+        #     SUM(CASE WHEN position = 'right' THEN 1 ELSE 0 END) AS right_count,
+        #     SUM(CASE WHEN position = 'left' THEN 1 ELSE 0 END) AS left_count,
+        #     SUM(CASE WHEN position = 'up' THEN 1 ELSE 0 END) AS up_count,
+        #     SUM(CASE WHEN position = 'down' THEN 1 ELSE 0 END) AS down_count,
+        #     SUM(CASE WHEN position = 'straight' THEN 1 ELSE 0 END) AS straight_count,
+        #     SUM(CASE WHEN position = 'multiple face detected' THEN 1 ELSE 0 END) AS multiple_faces,
+        #     SUM(CASE WHEN isPresent = 1 THEN 1 ELSE 0 END) AS total_present,
+        #     SUM(CASE WHEN isPresent = 0 THEN 1 ELSE 0 END) AS total_absent
+        # FROM studentExamlog sl 
+        # JOIN examAttempt ea on ea.id = sl.attempt_id
+        # JOIN Student s on s.StudentID = ea.studentID
+
+        # WHERE ea.studentID = 1 and ea.examID = 2
+        try:
+            result = db.query( 
+                func.sum(case((StudentExamLog.position == 'straight', 1), else_= 0)).label('straight'),
+                func.sum(case((StudentExamLog.position == 'left', 1), else_= 0)).label('left'),
+                func.sum(case((StudentExamLog.position == 'right', 1), else_= 0)).label('right'),
+                func.sum(case((StudentExamLog.position == 'up', 1), else_= 0)).label('up'),
+                func.sum(case((StudentExamLog.position == 'down', 1), else_= 0)).label('down'),
+                func.sum(case((StudentExamLog.position == 'multiple faces', 1), else_= 0)).label('multiple_faces'),
+                func.sum(case((StudentExamLog.isPresent == True, 1), else_= 0)).label('total_presence'),
+                func.sum(case((StudentExamLog.isPresent == False, 1), else_= 0)).label('total_absence'),
+            ).select_from(StudentExamLog).join(
+                ExamAttempt, ExamAttempt.ID == StudentExamLog.attempt_id
+            ).join(
+                Student, Student.StudentID == ExamAttempt.studentID
+            ).join(
+                Exam, Exam.ID == ExamAttempt.examID
+            ).filter(
+                ExamAttempt.studentID == std_id,
+                ExamAttempt.examID == exam_id
+            ).first()
+            
+            if result: 
+                record = {
+                    'straight': result.straight,
+                    'left': result.left,
+                    'right': result.right,
+                    'up': result.up,
+                    'down': result.down,
+                    'multiple_faces': result.multiple_faces,
+                    'total_presence': result.total_presence,
+                    'total_absence': result.total_absence
+                }
+                return {'content': record}
+            else:
+                return {"error": "no record found"}
+        except Exception as e:
+            return {"error": f"Database error: {str(e)}"}, 500
+        
+        
 # select CA.ID from CourseOffering CF
 # JOIN CourseAllocation CA on CA.OfferingID = Cf.ID
 # JOIN Course C on c.ID = CF.CourseID
