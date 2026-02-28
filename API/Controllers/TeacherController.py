@@ -90,6 +90,7 @@ class TeacherController:
                     Exam.TITLE.label('examTitle'),
                     Exam.STATUS.label('examStatus'),
                     Exam.E_DATE.label('examDate'),
+                    Exam.timeInMinutes.label('timeInMinutes'),
                     func.count(distinct(ExamAttempt.studentID)).label('appearedStudents')
                  ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
                  ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
@@ -102,7 +103,8 @@ class TeacherController:
                     Exam.ID,
                     Exam.TITLE,
                     Exam.STATUS, 
-                    Exam.E_DATE
+                    Exam.E_DATE,
+                    Exam.timeInMinutes
                 ).all()
                  
         if not result:
@@ -115,7 +117,8 @@ class TeacherController:
                     "examDate": exam.examDate,
                     "examTitle": exam.examTitle,
                     "examStatus": exam.examStatus,
-                    "appearedStudents": exam.appearedStudents
+                    "appearedStudents": exam.appearedStudents,
+                    "timeInMinutes": exam.timeInMinutes
                     
                 }
                 for exam in result
@@ -200,6 +203,8 @@ class TeacherController:
                 cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
             ).first()
             
+            print(data.startTime)
+            print(data.endTime)
             if result: 
                 record = {
                     'total': result.total,
