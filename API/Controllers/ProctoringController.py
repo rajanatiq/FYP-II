@@ -180,5 +180,5 @@ class ProctoringController:
     def getTimeStamp():
         current_timestamp = time.time()
         local_time = time.localtime(current_timestamp)
-        readable_time = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+        readable_time = time.strftime("%Y-%m-%d %H_%M_%S", local_time)
         return readable_time
