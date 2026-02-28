@@ -60,7 +60,13 @@ class UserController:
         TEMP_IMAGE = "temp.jpg"
         EMBEDDINGS_DIR = str(DIR /"StoredEmbeddings")
         THRESHOLD = 0.65
-
+        return {
+                        "status": "success",
+                        "id": 1,
+                        "userID": 1,
+                        "role": 'student',
+                        "name": "Awais"
+                        }
         try:
             # time.sleep(5)
             user = db.query(Users.ID, Users.Role, Users.Name).filter(
@@ -71,7 +77,6 @@ class UserController:
                 return {"status": "error", "details": "No User Found"}
             else:
                 userId, role, name = user
-    
                 with open(TEMP_IMAGE, "wb") as buffer:
                     shutil.copyfileobj(file.file, buffer)
 
@@ -103,7 +108,7 @@ class UserController:
                     [live_embedding],
                     [saved_embedding]
                 )[0][0]
-
+                print(similarity)
                 if similarity > THRESHOLD:
                     id = 0
                     if role.lower() == "teacher":

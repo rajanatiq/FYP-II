@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Analytics Canvas - Complete</title>
+    <style>
+        body {
+            background-color: #f2f2f7;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+        }
+        #device-border {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 54px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 4px solid #333;
+        }
+        canvas {
+            border-radius: 40px;
+            background-color: #FBFBFB;
+            display: block;
+            width: 393px;
+            height: 852px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="device-border">
+    <canvas id="iosCanvas"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById('iosCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const width = 393;
+    const height = 852;
+    const dpr = window.devicePixelRatio || 2;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const colors = {
+        bg: '#FBFBFB',
+        card: '#FFFFFF',
+        textMain: '#1C1C1E',
+        textSec: '#8E8E93',
+        blue: '#007AFF',
+        green: '#34C759',
+        red: '#FF3B30',
+        orange: '#FF9500',
+        purple: '#AF52DE',
+        grayFill: '#E5E5EA',
+        inputBg: '#F2F2F7'
+    };
+
+    let progress = 0;
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = colors.bg;
+        ctx.fillRect(0, 0, width, height);
+
+        // 1. Dynamic Island
+        drawRoundedRect(136, 11, 120, 32, 16, 'black');
+
+        // 2. Navigation Bar
+        ctx.fillStyle = colors.blue;
+        ctx.font = '500 17px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.textAlign = 'left';
+        ctx.fillText('‹ My Exam', 20, 75);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = colors.textSec;
+        ctx.font = '400 13px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('Feb 27, 2026', 373, 92);
+        ctx.fillStyle = colors.blue;
+        ctx.font = '600 17px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('Malik Awais', 373, 75);
+
+        // 3. Page Title
+        ctx.textAlign = 'left';
+        ctx.fillStyle = colors.textMain;
+        ctx.font = '700 32px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('Exam Analytics', 20, 135);
+
+        // 4. Time Filter Card
+        drawCard(20, 155, 353, 130);
+        ctx.fillStyle = colors.textSec;
+        ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('START TIME', 35, 182);
+        ctx.fillText('END TIME', 205, 182);
+        
+        drawRoundedRect(35, 190, 153, 36, 10, colors.inputBg);
+        drawRoundedRect(205, 190, 153, 36, 10, colors.inputBg);
+        
+        ctx.fillStyle = colors.textMain;
+        ctx.font = '15px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('10:00 AM', 45, 213);
+        ctx.fillText('11:30 AM', 215, 213);
+
+        drawRoundedRect(35, 238, 323, 32, 10, colors.blue);
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('Apply Filter', 393/2, 259);
+
+        // 5. Cheating Percentage Card (New)
+        ctx.textAlign = 'left';
+        drawCard(20, 300, 353, 110);
+        ctx.fillStyle = colors.textMain;
+        ctx.font = '600 18px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('Cheating Risk Analysis', 35, 330);
+        
+        // Gauge Background
+        const gx = 310, gy = 365, gw = 40;
+        drawRoundedRect(35, gy, 323, 12, 6, colors.grayFill);
+        // Gauge Fill (12% Risk Example)
+        const riskLevel = 12 * progress;
+        drawRoundedRect(35, gy, (323 * riskLevel) / 100, 12, 6, colors.red);
+        
+        ctx.fillStyle = colors.red;
+        ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.textAlign = 'right';
+        ctx.fillText(Math.round(riskLevel) + '%', 358, 345);
+        ctx.textAlign = 'left';
+        ctx.font = '500 13px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillStyle = colors.textSec;
+        ctx.fillText('Low probability of misconduct detected', 35, 393);
+
+        // 6. Face Position Analysis
+        drawCard(20, 425, 353, 215);
+        ctx.fillStyle = colors.textMain;
+        ctx.font = '600 18px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('Face Position Distribution', 35, 455);
+
+        const faceData = [
+            { label: 'Straight', val: 80, color: colors.blue },
+            { label: 'Left', val: 20, color: colors.purple },
+            { label: 'Other', val: 0, color: colors.orange }
+        ];
+
+        faceData.forEach((item, i) => {
+            const y = 485 + (i * 45);
+            ctx.fillStyle = colors.textMain;
+            ctx.font = '500 14px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+            ctx.fillText(item.label, 35, y);
+            ctx.textAlign = 'right';
+            ctx.fillText(item.val + '%', 358, y);
+            ctx.textAlign = 'left';
+            drawRoundedRect(35, y + 8, 323, 8, 4, colors.grayFill);
+            if (item.val > 0) {
+                drawRoundedRect(35, y + 8, (323 * (item.val * progress)) / 100, 8, 4, item.color);
+            }
+        });
+
+        // 7. Presence Detection
+        drawCard(20, 655, 353, 160);
+        ctx.fillStyle = colors.textMain;
+        ctx.font = '600 18px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText('Presence Detection', 35, 685);
+
+        const chartX = 90, chartY = 745;
+        drawDonutChart(chartX, chartY, 45, 0.76 * progress, colors.green, colors.red);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = colors.textMain;
+        ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText(Math.round(76 * progress) + '%', chartX, chartY + 6);
+
+        ctx.textAlign = 'left';
+        drawLegend(170, 730, colors.green, 'Present', '76%');
+        drawLegend(170, 760, colors.red, 'Absent', '24%');
+
+        if (progress < 1) {
+            progress += 0.025;
+            requestAnimationFrame(draw);
+        }
+    }
+
+    function drawRoundedRect(x, y, w, h, r, color) {
+        ctx.beginPath();
+        if(ctx.roundRect) {
+            ctx.roundRect(x, y, w, h, r);
+        } else {
+            // Fallback for older browsers
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+        }
+        ctx.fillStyle = color;
+        ctx.fill();
+    }
+
+    function drawCard(x, y, w, h) {
+        ctx.shadowColor = 'rgba(0,0,0,0.03)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 6;
+        drawRoundedRect(x, y, w, h, 20, colors.card);
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+    }
+
+    function drawDonutChart(x, y, radius, percent, colorActive, colorInactive) {
+        const startAngle = -Math.PI / 2;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = colors.grayFill;
+        ctx.lineWidth = 12;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius, startAngle, startAngle + (Math.PI * 2 * percent));
+        ctx.strokeStyle = colorActive;
+        ctx.lineWidth = 12;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+    }
+
+    function drawLegend(x, y, color, label, value) {
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.fillStyle = colors.textSec;
+        ctx.font = '400 14px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText(label, x + 15, y + 5);
+        ctx.fillStyle = colors.textMain;
+        ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "SF Pro Text"';
+        ctx.fillText(value, x + 85, y + 5);
+    }
+
+    draw();
+</script>
+
+</body>
+</html>

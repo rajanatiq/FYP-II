@@ -3,10 +3,11 @@ from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
 # import Models
-from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Student, Teacher, Users, Course, Exam, ExamMCQ,MCQOption,MCQAns)
+from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Student, Teacher, Users, Course, Exam, ExamMCQ,MCQOption,MCQAns, ExamAttempt)
+
 from Schemas.StudentAnswer import StudentAnswer
 from Schemas.McqAnswer import McqAnswer
-
+from Schemas.AttemptedExam import AttemptedExam
 
 
 class StudentController:
@@ -167,4 +168,5 @@ class StudentController:
 
 # where C.ID = 1
 
-    # @staticmethod
+    
+        

@@ -24,3 +24,4 @@ from .StudentSeating import *
 from .StudentBreak import *
 from .ExamRoom import *
 from .ExamAttempt import *
+from .StudentExamLog import *
