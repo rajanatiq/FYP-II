@@ -60,13 +60,7 @@ class UserController:
         TEMP_IMAGE = "temp.jpg"
         EMBEDDINGS_DIR = str(DIR /"StoredEmbeddings")
         THRESHOLD = 0.65
-        # return {
-        #                 "status": "success",
-        #                 "id": 1,
-        #                 "userID": 1,
-        #                 "role": 'student',
-        #                 "name": "Awais"
-        #                 }
+       
         try:
             # time.sleep(5)
             user = db.query(Users.ID, Users.Role, Users.Name).filter(

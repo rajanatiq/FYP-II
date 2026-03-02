@@ -200,11 +200,11 @@ class TeacherController:
             ).filter(
                 ExamAttempt.studentID == data.std_id,
                 ExamAttempt.examID == data.exam_id, 
-                cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
+                # cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
             ).first()
             
-            print(data.startTime)
-            print(data.endTime)
+            # print(data.startTime)
+            # print(data.endTime)
             if result: 
                 record = {
                     'total': result.total,

@@ -80,7 +80,7 @@ class ProctoringController:
             db.commit()
             db.refresh(new_event)
 
-            if new_event.EventType == 'Camera':
+            if str(new_event.EventType) == 'Camera':
                 new_proctoring = CameraMonitoring(
                     EventID = new_event.ID,
                     IsStudentPresent = 1,
@@ -89,7 +89,7 @@ class ProctoringController:
                 )
 
                 return await ProctoringController.add_proctoring_image(file, new_proctoring, db)
-            elif new_event.EventType == 'Screen':
+            elif str(new_event.EventType) == 'Screen':
                 new_proctoring = ScreenMonitoring(
                     EventID = new_event.ID,
                     ActionType = "Close App", 
@@ -110,9 +110,13 @@ class ProctoringController:
         folder = "Assets/Images/CameraMonitoring"
         if not os.path.exists(folder):
             os.makedirs(folder)
+            
+        if not file.filename:
+            return
+        
         ext = file.filename.split('.')[-1]
         id = new_pro.ID
-       
+        
         new_filename = f"image_{id}.{ext}"
         file_path = os.path.join(folder, new_filename)
 
@@ -138,6 +142,8 @@ class ProctoringController:
         folder = "Assets/Images/ScreenMonitoring"
         if not os.path.exists(folder):
             os.makedirs(folder)
+        if not file.filename:
+            return
         ext = file.filename.split('.')[-1]
         id = new_pro.ID
        

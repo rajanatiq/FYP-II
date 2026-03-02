@@ -168,6 +168,7 @@ class ExamController:
     @staticmethod
     def addStudentExamEntry(data: AttemptedExam , db:Session):
         """This method is for adding the student record in the examattempt table after joining the exam."""
+        
         attemptRecord = ExamAttempt(
             studentID= data.s_id,
             examID = data.e_id
@@ -188,13 +189,27 @@ class ExamController:
                 ExamAttempt.studentID == data.s_id,
                 ExamAttempt.examID == data.e_id
             ).first()
-            
+            print(f"Student id = {data.s_id}")
+            print(f"Exam id = {data.e_id}")
             if record:
                 return {"success": True}
             else:
                 return {"success": False}
         except Exception as e:
-            return {"fail": "data base error. trya again."}
+            return {"error": "Database error. try again."}
     
 
-        
+    @staticmethod 
+    def setExamStatusToComplete(exam_id: int, db: Session):
+        try:
+            exam = db.query(Exam).filter(Exam.ID == exam_id).first()
+            if not exam: 
+                return {'error': 'no exam found for this exam id.'}
+            else:
+                exam.STATUS = 'completed'
+                db.commit()
+                return {'success': True}
+        except Exception as e:
+            db.rollback()
+            return{'error': f'Database error {e}'}
+        return

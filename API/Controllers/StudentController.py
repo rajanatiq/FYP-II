@@ -170,6 +170,7 @@ class StudentController:
 
     @staticmethod
     def fetchExamAttemptID(sid: int, eid: int, db: Session):
+        """Function to fetch the student exam attempt id of a student exam which he has attempted, against student id and exam id """
         try:
             result = db.query(
                 ExamAttempt.ID.label('attemptID')

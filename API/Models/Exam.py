@@ -1,6 +1,6 @@
 from db import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 class Exam(Base):
     __tablename__ = 'exam' #
 
@@ -11,8 +11,8 @@ class Exam(Base):
     E_DATE = Column(DateTime)        # changed from Date to DateTime
     timeInMinutes = Column(Integer)     # new column for exam duration in hours
     E_TYPE = Column(String(6))
-    STATUS = Column(String(7))
-
+    # STATUS = Column(String(7))
+    STATUS: Mapped[str] = mapped_column(String(7))
     # Relationships
     allocation_rship = relationship('CourseAllocation', back_populates='exam_rship')
     

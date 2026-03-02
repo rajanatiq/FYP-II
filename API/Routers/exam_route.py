@@ -46,4 +46,7 @@ def ifExamAlreadyAttempt(data: AttemptedExam, db:Session = session):
 def addStudentExamRecord(data: AttemptedExam, db:Session= session):
     return ExamController.addStudentExamEntry(data, db)
 
+@router.get('/updateExamStatus/{exam_id}')
+def setExamStatusToComplete(exam_id: int, db: Session=session):
+    return ExamController.setExamStatusToComplete(exam_id, db)
 
