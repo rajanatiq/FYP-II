@@ -175,10 +175,11 @@ class ProctoringController:
     def saveFileOnServer(data: bytes, path: str):
         with open(path, "wb") as f:
             f.write(data)
+            
         return
     @staticmethod
     def getTimeStamp():
         current_timestamp = time.time()
-        local_time = time.localtime(current_timestamp)
-        readable_time = time.strftime("%Y-%m-%d %H_%M_%S", local_time)
+        local_time = time.localtime(current_timestamp) 
+        readable_time = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
         return readable_time

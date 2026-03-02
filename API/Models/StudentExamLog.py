@@ -13,6 +13,7 @@ class StudentExamLog(Base):
     isPresent = Column(Boolean)
 
     TIMESTAMP = Column(DateTime)
+    image_path = Column(String(None))
 
     examAttempt_rship = relationship("ExamAttempt", back_populates="log_rship")
 

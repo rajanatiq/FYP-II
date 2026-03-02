@@ -168,5 +168,19 @@ class StudentController:
 
 # where C.ID = 1
 
-    
+    @staticmethod
+    def fetchExamAttemptID(sid: int, eid: int, db: Session):
+        try:
+            result = db.query(
+                ExamAttempt.ID.label('attemptID')
+            ).filter(
+                ExamAttempt.examID == eid, 
+                ExamAttempt.studentID == sid
+            ).first()
+            
+            if not result:
+                return {'error': 'Attempt ID not found.'}
+            return {'id': result.attemptID}
+        except Exception as e:
+            return {'error': f'Database error {e}'}
         
