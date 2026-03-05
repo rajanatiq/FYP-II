@@ -5,9 +5,9 @@ from fastapi.responses import JSONResponse
 from Schemas.StudentLog import StudentLog
 # import Models
 from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog)
+image_base_url = 'http://192.168.100.54:8000/images/'
 
 class TeacherController:
-    
     @staticmethod
     def teacherAllocatedCourses(t_id: int, session: str ,db:Session):
         current_year = datetime.now().year
@@ -165,6 +165,7 @@ class TeacherController:
 
     @staticmethod
     def getStudentLogs(data: StudentLog, db:Session):
+        """Gets only the count of logs."""
         # SELECT
         #     count(*) as total_entry,
         #     SUM(CASE WHEN position = 'right' THEN 1 ELSE 0 END) AS right_count,
@@ -203,8 +204,6 @@ class TeacherController:
                 # cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
             ).first()
             
-            # print(data.startTime)
-            # print(data.endTime)
             if result: 
                 record = {
                     'total': result.total,
@@ -230,3 +229,37 @@ class TeacherController:
 # JOIN Teacher T on T.ID = CA.TeacherID
 # JOIN Users U on T.userID = U.ID
 # where C.ID = 1 and T.ID = 1
+
+    @staticmethod
+    def getStudentLogsWithImages(s_id: int, e_id: int, db: Session):
+        """get the logs with image evidences4"""
+        try:
+            result = db.query(
+                StudentExamLog.id.label('id'),
+                StudentExamLog.position.label('position'),
+                StudentExamLog.isPresent.label('isPresent'),
+                StudentExamLog.image_path.label('image_url')            
+            ).join(
+                ExamAttempt, ExamAttempt.ID == StudentExamLog.attempt_id
+            ).filter(
+                ExamAttempt.studentID == s_id, 
+                ExamAttempt.examID == e_id,
+                StudentExamLog.position != 'straight',
+            ).all()
+            
+            if not result:
+                return {'error', 'no record found.'}
+            
+            content = [
+                {
+                    'id': data.id,
+                    'position': data.position,
+                    'isPresent': data.isPresent,
+                    'image_url': image_base_url + data.image_url
+                }
+                for data in result
+            ]
+            
+            return {'content': content}
+        except Exception as e:
+            return {'error': f'database error {e}'}

@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+from fastapi.staticfiles import StaticFiles
+
 
 # Get the path to the 'API' folder (one level up from main.py)
 root_path = Path(__file__).resolve().parent.parent
@@ -22,6 +24,7 @@ import Models
 app = FastAPI(title="FYP Project API")
 
 
+app.mount("/images", StaticFiles(directory="Assets/Images"), name="images")
 
 # allows the request from frontEnd or Postman
 origins = ["*"] 

@@ -24,3 +24,7 @@ def studentsInExam(exam_id: int, db:Session = Depends(get_db)):
 @router.post('/getStudentExamLog')
 def getStudentExamLog(data: StudentLog, db:Session = Depends(get_db)):
     return TeacherController.getStudentLogs(data, db)
+
+@router.get('/getStudentLogsWithImages/{s_id}/{e_id}')
+def getImages(s_id: int, e_id: int, db:Session = Depends(get_db)):
+    return TeacherController.getStudentLogsWithImages(s_id, e_id, db)
