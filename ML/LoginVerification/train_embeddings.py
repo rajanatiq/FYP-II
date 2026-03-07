@@ -31,6 +31,7 @@ def train_students():
                 )
 
                 embedding = result[0]["embedding"]
+                print(len(result))
                 embeddings.append(embedding)
 
                 print(f"Processed: {image_name}")

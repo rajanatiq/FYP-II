@@ -201,9 +201,10 @@ class TeacherController:
             ).filter(
                 ExamAttempt.studentID == data.std_id,
                 ExamAttempt.examID == data.exam_id, 
-                # cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
+                cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
             ).first()
-            
+            print(f'start time = {data.startTime}')
+            print(f'end time = {data.endTime}')
             if result: 
                 record = {
                     'total': result.total,
@@ -221,40 +222,36 @@ class TeacherController:
                 return {"error": "no record found"}
         except Exception as e:
             return {"error": f"Database error: {str(e)}"}, 500
-        
-        
-# select CA.ID from CourseOffering CF
-# JOIN CourseAllocation CA on CA.OfferingID = Cf.ID
-# JOIN Course C on c.ID = CF.CourseID
-# JOIN Teacher T on T.ID = CA.TeacherID
-# JOIN Users U on T.userID = U.ID
-# where C.ID = 1 and T.ID = 1
 
     @staticmethod
-    def getStudentLogsWithImages(s_id: int, e_id: int, db: Session):
+    def getStudentLogsWithImages(data: StudentLog, db: Session):
         """get the logs with image evidences4"""
         try:
             result = db.query(
                 StudentExamLog.id.label('id'),
                 StudentExamLog.position.label('position'),
                 StudentExamLog.isPresent.label('isPresent'),
-                StudentExamLog.image_path.label('image_url')            
+                StudentExamLog.image_path.label('image_url'),
+                cast(StudentExamLog.TIMESTAMP, Time).label('timeStamp')         
             ).join(
                 ExamAttempt, ExamAttempt.ID == StudentExamLog.attempt_id
             ).filter(
-                ExamAttempt.studentID == s_id, 
-                ExamAttempt.examID == e_id,
-                StudentExamLog.position != 'straight',
+                ExamAttempt.studentID == data.std_id, 
+                ExamAttempt.examID == data.exam_id,
+                cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime),
+                # StudentExamLog.position != 'straight'
             ).all()
-            
+            print(f'length: {len(result)}')
             if not result:
-                return {'error', 'no record found.'}
+                return {'error': 'no record found.'}
             
+            print(len(result))
             content = [
                 {
                     'id': data.id,
                     'position': data.position,
                     'isPresent': data.isPresent,
+                    'timeStamp': data.timeStamp,
                     'image_url': image_base_url + data.image_url
                 }
                 for data in result
@@ -263,3 +260,17 @@ class TeacherController:
             return {'content': content}
         except Exception as e:
             return {'error': f'database error {e}'}
+        
+    @staticmethod
+    def deleteStudentLogRecord(logId: int, db: Session):
+        try:
+            record = db.query(StudentExamLog).filter(StudentExamLog.id == logId).first()
+            if record:
+                db.delete(record)
+                db.commit()
+                return {'success': 'record deleted'}
+            else:
+                return {'fail': 'no record found'}
+        except Exception as e:
+            db.rollback()
+            return {'fail': f'database error {e}'}

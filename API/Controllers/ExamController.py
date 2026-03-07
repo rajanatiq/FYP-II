@@ -185,17 +185,26 @@ class ExamController:
     def ifExamAlreadyAttempt(data: AttemptedExam, db:Session):
         """method to check if student has already attempted his exam or not to prevent duplication"""
         try:
+            print(f"student id: {data.s_id}")
+            print(f"Exam id: {data.e_id}")
             record = db.query(ExamAttempt).filter(
                 ExamAttempt.studentID == data.s_id,
                 ExamAttempt.examID == data.e_id
             ).first()
-            print(f"Student id = {data.s_id}")
-            print(f"Exam id = {data.e_id}")
             if record:
+                print("success")
                 return {"success": True}
             else:
-                return {"success": False}
+                new_record = ExamAttempt(
+                    studentID = data.s_id,
+                    examID = data.e_id
+                )
+                db.add(new_record)
+                db.commit()
+                print(f"false {new_record.ID}")
+                return {"success": False, 'attempt_id': new_record.ID}
         except Exception as e:
+            db.rollback()
             return {"error": "Database error. try again."}
     
 

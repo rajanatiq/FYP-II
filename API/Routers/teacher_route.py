@@ -25,6 +25,10 @@ def studentsInExam(exam_id: int, db:Session = Depends(get_db)):
 def getStudentExamLog(data: StudentLog, db:Session = Depends(get_db)):
     return TeacherController.getStudentLogs(data, db)
 
-@router.get('/getStudentLogsWithImages/{s_id}/{e_id}')
-def getImages(s_id: int, e_id: int, db:Session = Depends(get_db)):
-    return TeacherController.getStudentLogsWithImages(s_id, e_id, db)
+@router.post('/getStudentLogsWithImages')
+def getImages(data: StudentLog, db:Session = Depends(get_db)):
+    return TeacherController.getStudentLogsWithImages(data, db)
+
+@router.get('/deleteStudentLogRecord/{logId}')
+def deleteStudentLogRecord(logId: int, db: Session = Depends(get_db)):
+    return TeacherController.deleteStudentLogRecord(logId, db)

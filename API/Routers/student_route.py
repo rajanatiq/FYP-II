@@ -22,8 +22,6 @@ def fetch_exams(id: int, db: Session = Depends(get_db)):
 @router.post('/AddMcqAnswer/')
 def Add_McqAnswer(data: StudentAnswer, db: Session=Depends(get_db)):
     return StudentController.Add_McqAnswer (data, db)
-
-
 @router.get('/fetchAttemptId/{s_id}/{e_id}')
 def fetchExamAttemptID(s_id: int, e_id: int, db: Session = Depends(get_db)):
     return StudentController.fetchExamAttemptID(s_id, e_id, db)

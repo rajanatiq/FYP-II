@@ -1,17 +1,17 @@
+# lib imports 
+import numpy as np
+import cv2
 from datetime import datetime
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 import time
+import os
 from pathlib import Path
 
-root_dir = Path(__file__).resolve().parent.parent
+root_dir = Path(__file__).resolve().parent.parent # Points to API Folder 
 
 # import Models
-from Models import (ProctoringEvent,CameraMonitoring, ScreenMonitoring)
-
-# lib imports 
-import numpy as np
-import cv2
+from Models import (ProctoringEvent,CameraMonitoring, ScreenMonitoring, StudentExamLog)
 
 # tarined models for prediction
 from ML.FaceCount.faceCount import FaceCounter
@@ -21,27 +21,70 @@ from ML.faceCount import FaceCounter
 
 counter = FaceCounter()
 predict = PoseEstimation()
-
+pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring') # Points to Camera Monitoring folder
 class ProctoringController:
     
     @staticmethod
-    async def FaceProctoring(file: UploadFile):
+    async def FaceProctoring(file: UploadFile, attempt_id: int, db: Session):
+        proct = ProctoringController()
         content = await file.read()
+        
+        filePath = proct.saveImageOnServer(content, attempt_id)
+        print(f"file path = {filePath}")
         np_array = np.frombuffer(content, np.uint8)
         image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
         face_count = counter.faceCount(image=image)
 
-        if face_count > 1:
-            return {"pose": "Multiple faces detected"}
-        elif face_count == 0:
-            print("No face deteced.")
-            return {"pose": "No face detected"}
-        else:
-            pose = PoseEstimationClass.process_face(image)
-            print(f"pose= {pose}")
-            return {"pose": pose}
+        new_record = StudentExamLog()
+        new_record.attempt_id = attempt_id
+        new_record.timestamp = datetime.now()
+        new_record.image_path = filePath
+        
+        try:
+            
+            if face_count > 1:
+                new_record.isPresent = True
+                new_record.position = "multiple face detected"
+                db.add(new_record)
+                db.commit()
+                position = "Multiple faces detected"
+                # return {"pose": "Multiple faces detected"}
+            
+            elif face_count == 0:
+                new_record.isPresent = False
+                new_record.position = "none"
+                position = "no face detected"
+                # return {"pose": "No face detected"}
+            
+            else:
+                pose = PoseEstimationClass.process_face(image)
+                new_record.position = str(pose)
+                new_record.isPresent = True
+                position = pose
+                # return {"pose": pose}
+            db.add(new_record)
+            db.commit()
+            
+            return {'pose': position}
+        except Exception as e:
+            db.rollback()
+            return {'fail': f"data base error {e}"}
 
+    def saveImageOnServer(self, image, attempt_id):
+        image_path = os.path.join(pictures_base_folder, str(attempt_id))
+        
+        if not os.path.exists(image_path):
+            os.mkdir(image_path)
+        
+        filename = ProctoringController.getTimeStamp() + ".jpg"
+        print(filename)
+        image_path = os.path.join(image_path, filename)
+        with open(image_path, "wb") as f:
+            f.write(image)
+        return os.path.join(str(attempt_id), filename)
+    
+    
     @staticmethod
     async def VoiceProctoring(file: UploadFile):
         audio_bytes = await file.read()
@@ -187,5 +230,5 @@ class ProctoringController:
     def getTimeStamp():
         current_timestamp = time.time()
         local_time = time.localtime(current_timestamp) 
-        readable_time = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+        readable_time = time.strftime("%Y-%m-%d %H-%M-%S", local_time)
         return readable_time

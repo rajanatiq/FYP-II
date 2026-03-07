@@ -83,6 +83,7 @@ class UserController:
                     )
 
                     live_embedding = result[0]["embedding"]
+                    print(len(result))
 
                 except Exception as e:
                     return {"status": "error", "detail": "Face not detected"}

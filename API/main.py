@@ -24,7 +24,7 @@ import Models
 app = FastAPI(title="FYP Project API")
 
 
-app.mount("/images", StaticFiles(directory="Assets/Images"), name="images")
+app.mount("/images", StaticFiles(directory="Assets/Images/CameraMonitoring"), name="images")
 
 # allows the request from frontEnd or Postman
 origins = ["*"] 
