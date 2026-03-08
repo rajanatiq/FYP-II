@@ -174,7 +174,7 @@ class ProctoringController:
         new_filename = f"image_{id}.{ext}"
         file_path = os.path.join(folder, new_filename)
 
-        new_pro.ImageEvidence = new_filename
+        # new_pro.ImageEvidence = new_filename
         
             # Save file manually
         with open(file_path, "wb") as f:
