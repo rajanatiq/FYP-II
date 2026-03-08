@@ -10,3 +10,4 @@ __pycache__/
 # Assets/*
 # Assets/
 # !Assets/.gitkeep
+Assets/**/*
