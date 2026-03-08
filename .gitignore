@@ -8,4 +8,5 @@ __pycache__/
 1.npy/
 .idea/
 Assets/*
+Assets/
 !Assets/.gitkeep
