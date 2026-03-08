@@ -51,15 +51,52 @@ class UserController:
         #     print("database error")
         #     return {"error": f"Database error: {str(e)}"}, 500
 
-
-
     @staticmethod
-    def checkLogin(file: UploadFile, id: int, db: Session):
+    def verifyPerson(id: int):
         from pathlib import Path
         DIR = Path(__file__).resolve().parent.parent.parent
         TEMP_IMAGE = "temp.jpg"
         EMBEDDINGS_DIR = str(DIR /"StoredEmbeddings")
         THRESHOLD = 0.65
+       
+        try:
+            result = DeepFace.represent(
+                        img_path=TEMP_IMAGE,
+                        model_name="Facenet",
+                        enforce_detection=True
+                    )
+
+            live_embedding = result[0]["embedding"] # type: ignore
+        except Exception as e:
+            return False
+        
+        embedding_path = os.path.join(EMBEDDINGS_DIR, f"{id}.npy")
+
+        if not os.path.exists(embedding_path):
+            return False
+        # Load saved embedding
+        saved_embedding = np.load(embedding_path)
+
+        # Compare embeddings
+        similarity = cosine_similarity(
+            [live_embedding], # type: ignore
+            [saved_embedding] # type: ignore
+        )[0][0]
+        print(similarity)
+        if similarity > THRESHOLD:
+            return True
+        else:
+            return False
+
+
+    @staticmethod
+    async def checkLogin(file: UploadFile, id: int, db: Session):
+        from pathlib import Path
+        DIR = Path(__file__).resolve().parent.parent.parent
+        TEMP_IMAGE = "temp.jpg"
+        EMBEDDINGS_DIR = str(DIR /"StoredEmbeddings")
+        THRESHOLD = 0.65
+        content = await file.read()
        
         try:
             # time.sleep(5)
@@ -71,8 +108,10 @@ class UserController:
                 return {"status": "error", "details": "No User Found"}
             else:
                 userId, role, name = user
+                
                 with open(TEMP_IMAGE, "wb") as buffer:
-                    shutil.copyfileobj(file.file, buffer)
+                    # shutil.copyfileobj(file.file, buffer)
+                    buffer.write(content)
 
                 # Generate embedding from live image
                 try:
@@ -82,7 +121,7 @@ class UserController:
                         enforce_detection=True
                     )
 
-                    live_embedding = result[0]["embedding"]
+                    live_embedding = result[0]["embedding"] # type: ignore
                     print(len(result))
 
                 except Exception as e:
@@ -100,8 +139,8 @@ class UserController:
 
                 # Compare embeddings
                 similarity = cosine_similarity(
-                    [live_embedding],
-                    [saved_embedding]
+                    [live_embedding], # type: ignore
+                    [saved_embedding] # type: ignore
                 )[0][0]
                 print(similarity)
                 if similarity > THRESHOLD:
@@ -110,12 +149,12 @@ class UserController:
                         getID = db.query(Teacher.ID).filter(
                             Teacher.userID == userId
                         ).first()
-                        id = getID[0]
+                        id = getID[0] # type: ignore
                     elif role.lower() == "student":
                         getID = db.query(Student.StudentID).filter(
                             Student.userID == userId
                         ).first()
-                        id = getID[0]
+                        id = getID[0] # type: ignore
         
                     return {
                         "status": "success",
@@ -131,3 +170,5 @@ class UserController:
             print("database error")
             return {"status": "error", "detail": f"Database error: {str(e)}"}
         # Save uploaded image
+    
+    

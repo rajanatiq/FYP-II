@@ -16,5 +16,5 @@ def fetch_users(db: Session = Depends(get_db)):
     return UserController.get_all_users(db)
 
 @router.post('/login')
-def login_users(file: UploadFile = File(...), id: int = Form(...), db: Session = Depends(get_db)):
-    return UserController.checkLogin(file, id, db)
+async def login_users(file: UploadFile = File(...), id: int = Form(...), db: Session = Depends(get_db)):
+    return await UserController.checkLogin(file, id, db)

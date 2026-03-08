@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 import time
 import os
 from pathlib import Path
-
+from deepface import DeepFace
+import shutil
+from Controllers.UserController import UserController
 root_dir = Path(__file__).resolve().parent.parent # Points to API Folder 
 
 # import Models
@@ -25,8 +27,8 @@ pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring') # Points
 class ProctoringController:
     
     @staticmethod
-    async def FaceProctoring(file: UploadFile, attempt_id: int, db: Session):
-        '''This method checks the face proctoring, saving the image on the server and adding the entry in the database in the student exam log table. '''
+    async def FaceProctoring(file: UploadFile, attempt_id: int, identity_no: int,  db: Session):
+        '''This method checks the face proctoring, saving the image on the server and add's the entry in the database in the student exam log table. '''
         
         examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
         if examAttempt: 
@@ -35,16 +37,32 @@ class ProctoringController:
             
             np_array = np.frombuffer(content, np.uint8)
             image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
-
-            face_count = counter.faceCount(image=image)
+            
+            TEMP_IMAGE = "temp.jpg"
+            
+            with open(TEMP_IMAGE, "wb") as buffer:
+                buffer.write(content)
+                
+            try:
+                    result = DeepFace.represent(
+                        img_path=TEMP_IMAGE,
+                        model_name="Facenet",
+                        enforce_detection=True
+                    )
+                    print(len(result))
+                    face_count = len(result)
+                    
+            except Exception as e:  
+                    face_count = 0  
+            # face_count = counter.faceCount(image=image)
 
             new_record = StudentExamLog()
             new_record.attempt_id = attempt_id
             new_record.timestamp = datetime.now()
             
-            print(f'attempt id : {attempt_id}')
+            position = "unknown"
             try:
-                
+                print(f"face count: {face_count}")
                 if face_count > 1:
                     new_record.isPresent = True
                     new_record.position = "multiple face detected"
@@ -58,10 +76,18 @@ class ProctoringController:
                     # return {"pose": "No face detected"}
                 
                 else:
-                    pose = PoseEstimationClass.process_face(image)
-                    new_record.position = str(pose)
-                    new_record.isPresent = True
-                    position = pose
+                    identity_verified = UserController.verifyPerson(identity_no)
+                    
+                    if identity_verified == True:
+                        pose = PoseEstimationClass.process_face(image)
+                        new_record.position = str(pose)
+                        new_record.isPresent = True
+                        position = pose
+                        
+                    elif identity_verified == False:
+                        new_record.position = "identity mismatched"
+                        new_record.isPresent = False
+                        position = "Identity Mismatched. Unauthorized Person Detected!"
                     # return {"pose": pose}
                     
                 db.add(new_record)
