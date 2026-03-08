@@ -7,7 +7,7 @@ __pycache__/
 *.pyc
 1.npy/
 .idea/
-# Assets/*
-# Assets/
-# !Assets/.gitkeep
+Assets/*
+Assets/
+!Assets/.gitkeep
 Assets/**/*
