@@ -11,7 +11,7 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent # Points to API Folder 
 
 # import Models
-from Models import (ProctoringEvent,CameraMonitoring, ScreenMonitoring, StudentExamLog)
+from Models import (ProctoringEvent,CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt)
 
 # tarined models for prediction
 from ML.FaceCount.faceCount import FaceCounter
@@ -26,52 +26,60 @@ class ProctoringController:
     
     @staticmethod
     async def FaceProctoring(file: UploadFile, attempt_id: int, db: Session):
-        proct = ProctoringController()
-        content = await file.read()
+        '''This method checks the face proctoring, saving the image on the server and adding the entry in the database in the student exam log table. '''
         
-        filePath = proct.saveImageOnServer(content, attempt_id)
-        print(f"file path = {filePath}")
-        np_array = np.frombuffer(content, np.uint8)
-        image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
-
-        face_count = counter.faceCount(image=image)
-
-        new_record = StudentExamLog()
-        new_record.attempt_id = attempt_id
-        new_record.timestamp = datetime.now()
-        new_record.image_path = filePath
-        
-        try:
+        examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
+        if examAttempt: 
+            proct = ProctoringController()
+            content = await file.read()
             
-            if face_count > 1:
-                new_record.isPresent = True
-                new_record.position = "multiple face detected"
+            np_array = np.frombuffer(content, np.uint8)
+            image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+
+            face_count = counter.faceCount(image=image)
+
+            new_record = StudentExamLog()
+            new_record.attempt_id = attempt_id
+            new_record.timestamp = datetime.now()
+            
+            print(f'attempt id : {attempt_id}')
+            try:
+                
+                if face_count > 1:
+                    new_record.isPresent = True
+                    new_record.position = "multiple face detected"
+                    position = "Multiple faces detected"
+                    # return {"pose": "Multiple faces detected"}
+                
+                elif face_count == 0:
+                    new_record.isPresent = False
+                    new_record.position = "none"
+                    position = "no face detected"
+                    # return {"pose": "No face detected"}
+                
+                else:
+                    pose = PoseEstimationClass.process_face(image)
+                    new_record.position = str(pose)
+                    new_record.isPresent = True
+                    position = pose
+                    # return {"pose": pose}
+                    
                 db.add(new_record)
+                serverImagePath = proct.saveImageOnServer(content, attempt_id)
+                new_record.TIMESTAMP = datetime.now()
+                new_record.image_path = serverImagePath
+                print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
                 db.commit()
-                position = "Multiple faces detected"
-                # return {"pose": "Multiple faces detected"}
-            
-            elif face_count == 0:
-                new_record.isPresent = False
-                new_record.position = "none"
-                position = "no face detected"
-                # return {"pose": "No face detected"}
-            
-            else:
-                pose = PoseEstimationClass.process_face(image)
-                new_record.position = str(pose)
-                new_record.isPresent = True
-                position = pose
-                # return {"pose": pose}
-            db.add(new_record)
-            db.commit()
-            
-            return {'pose': position}
-        except Exception as e:
-            db.rollback()
-            return {'fail': f"data base error {e}"}
+                
+                return {'pose': position}
+            except Exception as e:
+                db.rollback()
+                return {'fail': f"data base error {e}"}
+        else:
+            return {'fail': 'no student record found. '}
 
     def saveImageOnServer(self, image, attempt_id):
+        '''Helper function to save the image on the server, by creating unique file name.'''
         image_path = os.path.join(pictures_base_folder, str(attempt_id))
         
         if not os.path.exists(image_path):
@@ -80,13 +88,16 @@ class ProctoringController:
         filename = ProctoringController.getTimeStamp() + ".jpg"
         print(filename)
         image_path = os.path.join(image_path, filename)
-        with open(image_path, "wb") as f:
-            f.write(image)
+        
+        ProctoringController.saveFileOnServer(image, image_path)
+        # with open(image_path, "wb") as f:
+        #     f.write(image)
         return os.path.join(str(attempt_id), filename)
     
     
     @staticmethod
     async def VoiceProctoring(file: UploadFile):
+        '''Takes the audio and process and then save on the server. '''
         audio_bytes = await file.read()
         if audio_bytes is not None:
             timeStamp = ProctoringController.getTimeStamp()
@@ -211,6 +222,7 @@ class ProctoringController:
 
     @staticmethod
     def get_student_cheating_count(std_id: int, db: Session):
+        '''Method to count the total cheating in the exam of a particular student in exam.'''
         try:
             count = db.query(ProctoringEvent).filter(ProctoringEvent.S_ID == std_id).count()
             return {
@@ -230,5 +242,5 @@ class ProctoringController:
     def getTimeStamp():
         current_timestamp = time.time()
         local_time = time.localtime(current_timestamp) 
-        readable_time = time.strftime("%Y-%m-%d %H-%M-%S", local_time)
+        readable_time = time.strftime("%Y%m%d%H%M%S", local_time)
         return readable_time

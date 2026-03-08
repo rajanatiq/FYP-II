@@ -1,6 +1,6 @@
 from db import Base
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, Boolean, DateTime
+from sqlalchemy import text, String, ForeignKey, Boolean, DateTime, func
 from sqlalchemy.orm import relationship,Mapped, mapped_column
 
 class StudentExamLog(Base):
@@ -25,6 +25,12 @@ class StudentExamLog(Base):
     isPresent: Mapped[bool] = mapped_column(Boolean)
 
     TIMESTAMP: Mapped[datetime] = mapped_column(DateTime)
+    
+    # TIMESTAMP: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    # TIMESTAMP: Mapped[datetime] = mapped_column(
+    #     DateTime,
+    #     server_default=text("GETDATE()")
+    # )   
 
     image_path: Mapped[str] = mapped_column(String(100))
     

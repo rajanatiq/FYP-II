@@ -15,7 +15,8 @@ from Schemas.AttemptedExam import AttemptedExam
 class ExamController:
     @staticmethod
     def fetch_mcqs(db: Session, exam_id: int):
-
+        '''Method to fetch the mcq's of the exam for a particular exam. '''
+        
         rows = db.query(
             ExamMCQ.ID.label("mcqID"),
             ExamMCQ.DESCRIPTION.label("question"),
@@ -167,7 +168,7 @@ class ExamController:
 
     @staticmethod
     def addStudentExamEntry(data: AttemptedExam , db:Session):
-        """This method is for adding the student record in the examattempt table after joining the exam."""
+        """This method is for adding the student entry for the exam in the examattempt table after joining the exam."""
         
         attemptRecord = ExamAttempt(
             studentID= data.s_id,
@@ -210,6 +211,7 @@ class ExamController:
 
     @staticmethod 
     def setExamStatusToComplete(exam_id: int, db: Session):
+        '''This is the method to set the pending exam staus to completed.'''
         try:
             exam = db.query(Exam).filter(Exam.ID == exam_id).first()
             if not exam: 

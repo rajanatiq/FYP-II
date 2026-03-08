@@ -3,9 +3,16 @@ from sqlalchemy import extract, func, distinct, case, cast, Time
 from datetime import datetime
 from fastapi.responses import JSONResponse
 from Schemas.StudentLog import StudentLog
+import os
+
+from pathlib import Path
+root_dir = Path(__file__).resolve().parent.parent # Points to API Folder 
+
 # import Models
 from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog)
+
 image_base_url = 'http://192.168.100.54:8000/images/'
+pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring')
 
 class TeacherController:
     @staticmethod
@@ -266,9 +273,17 @@ class TeacherController:
         try:
             record = db.query(StudentExamLog).filter(StudentExamLog.id == logId).first()
             if record:
-                db.delete(record)
-                db.commit()
-                return {'success': 'record deleted'}
+                imagePath = record.image_path
+                serverPath = os.path.join(pictures_base_folder, imagePath)
+                
+                if os.path.exists(serverPath):
+                    os.remove(serverPath)      
+                    db.delete(record)
+                    db.commit()
+                    return {'success': 'record deleted', 'path' : serverPath}
+                
+                else:
+                    return {'fail': 'No image found on the server, Please try again.', 'path': serverPath}
             else:
                 return {'fail': 'no record found'}
         except Exception as e:
