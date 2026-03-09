@@ -58,7 +58,7 @@ class ProctoringController:
 
             new_record = StudentExamLog()
             new_record.attempt_id = attempt_id
-            new_record.timestamp = datetime.now()
+            # new_record.TIMESTAMP = datetime.now()
             
             position = "unknown"
             try:
@@ -89,17 +89,24 @@ class ProctoringController:
                         new_record.isPresent = False
                         position = "Identity Mismatched. Unauthorized Person Detected!"
                     # return {"pose": pose}
-                    
-                db.add(new_record)
+
                 serverImagePath = proct.saveImageOnServer(content, attempt_id)
-                new_record.TIMESTAMP = datetime.now()
                 new_record.image_path = serverImagePath
+                new_record.TIMESTAMP = datetime.now()
+                print(new_record.attempt_id, new_record.position, new_record.isPresent, new_record.TIMESTAMP,
+                      new_record.image_path)
                 print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
+                db.add(new_record)
                 db.commit()
+                db.refresh(new_record)
+                print("Inserted ID:", new_record.id)
+
+
                 
                 return {'pose': position}
             except Exception as e:
                 db.rollback()
+                print(f"DB ERROR: {e}")  # ← add this line
                 return {'fail': f"data base error {e}"}
         else:
             return {'fail': 'no student record found. '}
