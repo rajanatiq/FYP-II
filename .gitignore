@@ -8,6 +8,7 @@ __pycache__/
 1.npy/
 .idea/
 # ignore all assets files
+Assets/
 Assets/*
 !Assets/.gitkeep
 Assets/**/*
