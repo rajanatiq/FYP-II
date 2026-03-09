@@ -9,6 +9,7 @@ __pycache__/
 .idea/
 # ignore all assets files
 Assets/*
-
+!Assets/.gitkeep
+Assets/**/*
 # keep folder in repo
 !Assets/.gitkeep
