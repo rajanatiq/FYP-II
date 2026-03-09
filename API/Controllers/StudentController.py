@@ -40,7 +40,8 @@ class StudentController:
             Student, Student.StudentID == CourseEnrollment.StudentID
         ).filter(
             Student.StudentID == student_id, 
-            CourseEnrollment.Status == 'enrolled'
+            CourseEnrollment.Status == 'enrolled',
+            CourseAllocation.status == 'allocated'
         ).all()
         if not result:
             return {

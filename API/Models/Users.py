@@ -14,7 +14,7 @@ class Users(Base):
     Role = Column(String(50), nullable=False)
     profile_image = Column(String, nullable=False)  # Maps to VARBINARY(MAX)
     image_embedding = Column(LargeBinary, nullable=False)  # Maps to VARBINARY(MAX)
-    identity_no = Column(Integer, nullable=False)
+    identity_no = Column(String(10), nullable=False)
 
     # Relationship: User <-> Student
     # uselist=False implies a One-to-One relationship (One User has One Student Profile)

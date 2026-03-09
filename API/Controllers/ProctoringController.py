@@ -30,6 +30,7 @@ class ProctoringController:
     async def FaceProctoring(file: UploadFile, attempt_id: int, identity_no: int,  db: Session):
         '''This method checks the face proctoring, saving the image on the server and add's the entry in the database in the student exam log table. '''
         
+        print(f'attempt id: {attempt_id}')
         examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
         if examAttempt: 
             proct = ProctoringController()
