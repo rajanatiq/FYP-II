@@ -47,15 +47,20 @@ class ProctoringController:
                     result = DeepFace.represent(
                         img_path=TEMP_IMAGE,
                         model_name="Facenet",
+                        detector_backend="retinaface",
                         enforce_detection=True
                     )
                     print(len(result))
                     face_count = len(result)
                     
+                    for i in result:
+                        print(f'Confidence: {i["face_confidence"]}') # type:ignore
+                    
             except Exception as e:  
                     face_count = 0  
             # face_count = counter.faceCount(image=image)
 
+            
             new_record = StudentExamLog()
             new_record.attempt_id = attempt_id
             new_record.TIMESTAMP = datetime.now()
