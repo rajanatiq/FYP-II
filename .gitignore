@@ -7,7 +7,8 @@ __pycache__/
 *.pyc
 1.npy/
 .idea/
+# ignore all assets files
 Assets/*
-Assets/
+
+# keep folder in repo
 !Assets/.gitkeep
-Assets/**/*

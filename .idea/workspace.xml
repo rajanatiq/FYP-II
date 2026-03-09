@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="hsdg">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/TeacherController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/TeacherController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/UserController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/UserController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Schemas/StudentLog.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Schemas/StudentLog.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/temp.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/API/temp.jpg" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +40,7 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/FYP-II/StoredEmbeddings&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/FYP-II(Backend)/FYP-II&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
@@ -84,5 +81,16 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="hsdg" />
     <option name="LAST_COMMIT_MESSAGE" value="hsdg" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/API/Controllers/ProctoringController.py</url>
+          <line>1</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
