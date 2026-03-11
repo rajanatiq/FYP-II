@@ -38,16 +38,15 @@ class PoseEstimationClass:
         return "STRAIGHT"
 
     @staticmethod
-    def process_face(image):
+    def process_face_pose(image):
         if image is None:
             return "no image found"
 
-        mp_face_mesh = mp.solutions.face_mesh
+        mp_face_mesh = mp.solutions.face_mesh # type: ignore
         h, w, _ = image.shape
 
         with mp_face_mesh.FaceMesh(
-            static_image_mode=True, \
-
+            static_image_mode=True,
             max_num_faces=1,
             refine_landmarks=True
         ) as face_mesh:
@@ -115,3 +114,26 @@ class PoseEstimationClass:
             pose = PoseEstimationClass.estimate_face_pose(nose_norm, left_cheek_norm, right_cheek_norm)
             
             return pose
+
+    @staticmethod
+    def count_face_mediapipe(image):
+        mp_face_mesh = mp.solutions.face_mesh # type: ignore
+        
+        with mp_face_mesh.FaceMesh(
+            max_num_faces=5,
+            refine_landmarks=True,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
+        ) as face_mesh:
+
+            rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            results = face_mesh.process(rgb)
+
+            if not results.multi_face_landmarks:
+                return image, None
+            
+            print(f'total face count: {len(results.multi_face_landmarks)}')
+
+
+image = cv2.imread('/Users/mc/Exam Proctoring/FYP-II/ML/Data Set/Front/IMG_7164.JPG')
+PoseEstimationClass.count_face_mediapipe(image)

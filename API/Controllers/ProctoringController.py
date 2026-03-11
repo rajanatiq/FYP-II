@@ -8,7 +8,7 @@ import time
 import os
 from pathlib import Path
 from deepface import DeepFace
-import shutil
+from retinaface import RetinaFace
 from Controllers.UserController import UserController
 root_dir = Path(__file__).resolve().parent.parent # Points to API Folder 
 
@@ -23,11 +23,13 @@ from ML.faceCount import FaceCounter
 
 counter = FaceCounter()
 predict = PoseEstimation()
+
+retina_face_model = RetinaFace.build_model() # Building Retina Face Model Once.
 pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring') # Points to Camera Monitoring folder
 class ProctoringController:
     
     @staticmethod
-    async def FaceProctoring(file: UploadFile, attempt_id: int, identity_no: int,  db: Session):
+    async def FaceProctoring(file: UploadFile, attempt_id: int, identity_no: str,  db: Session):
         '''This method checks the face proctoring, saving the image on the server and add's the entry in the database in the student exam log table. '''
         
         print(f'attempt id: {attempt_id}')
@@ -39,28 +41,10 @@ class ProctoringController:
             np_array = np.frombuffer(content, np.uint8)
             image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
             
-            TEMP_IMAGE = "temp.jpg"
-            
-            with open(TEMP_IMAGE, "wb") as buffer:
-                buffer.write(content)
-                
-            try:
-                    result = DeepFace.represent(
-                        img_path=TEMP_IMAGE,
-                        model_name="Facenet",
-                        detector_backend="retinaface",
-                        enforce_detection=True
-                    )
-                    print(len(result))
-                    face_count = len(result)
-                    
-                    for i in result:
-                        print(f'Confidence: {i["face_confidence"]}') # type:ignore
-                    
-            except Exception as e:  
-                    face_count = 0  
+            # face_count = ProctoringController.count_face_deep_face(content=content)
             # face_count = counter.faceCount(image=image)
 
+            face_count = ProctoringController.count_face(image)
             
             new_record = StudentExamLog()
             new_record.attempt_id = attempt_id
@@ -85,7 +69,7 @@ class ProctoringController:
                     identity_verified = UserController.verifyPerson(identity_no)
                     
                     if identity_verified == True:
-                        pose = PoseEstimationClass.process_face(image)
+                        pose = PoseEstimationClass.process_face_pose(image)
                         new_record.position = str(pose)
                         new_record.isPresent = True
                         position = pose
@@ -264,6 +248,8 @@ class ProctoringController:
         except Exception as e:
             return {"error": f"Error: {str(e)}"}, 500
 
+
+    # MARK: Helper Functions
     @staticmethod
     def saveFileOnServer(data: bytes, path: str):
         with open(path, "wb") as f:
@@ -276,3 +262,37 @@ class ProctoringController:
         local_time = time.localtime(current_timestamp) 
         readable_time = time.strftime("%Y%m%d%H%M%S", local_time)
         return readable_time
+    
+    @staticmethod
+    def count_face(cv2Image):
+        '''This function uses retina face for counting numeber of faces in an image.'''
+        
+        faces = RetinaFace.detect_faces(cv2Image, model=retina_face_model)
+        
+        if faces:
+            face_count = len(faces)
+        else:
+            face_count = 0
+        
+        return face_count
+    
+    @staticmethod
+    def count_face_deep_face(content):
+        TEMP_IMAGE = "temp.jpg"
+        with open(TEMP_IMAGE, "wb") as buffer:
+            buffer.write(content)
+        try:
+                result = DeepFace.represent(
+                    img_path=TEMP_IMAGE,
+                    model_name="Facenet",
+                    detector_backend="retinaface",
+                    enforce_detection=True
+                )
+                print(len(result))
+                face_count = len(result)
+                # for i in result:
+                #     print(f'Confidence: {i["face_confidence"]}') # type:ignore
+                
+        except Exception as e:  
+                face_count = 0
+        return face_count

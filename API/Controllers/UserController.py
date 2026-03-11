@@ -52,7 +52,7 @@ class UserController:
         #     return {"error": f"Database error: {str(e)}"}, 500
 
     @staticmethod
-    def verifyPerson(id: int):
+    def verifyPerson(id: str):
         from pathlib import Path
         DIR = Path(__file__).resolve().parent.parent.parent
         TEMP_IMAGE = "temp.jpg"
@@ -71,7 +71,7 @@ class UserController:
             return False
         
         embedding_path = os.path.join(EMBEDDINGS_DIR, f"{id}.npy")
-
+        print(f"embedding path: {embedding_path}")
         if not os.path.exists(embedding_path):
             return False
         # Load saved embedding

@@ -188,6 +188,7 @@ class TeacherController:
         # JOIN Student s on s.StudentID = ea.studentID
 
         # WHERE ea.studentID = 1 and ea.examID = 2
+        print(f'student id: {data.std_id}, exam id: {data.exam_id}')
         try:
             result = db.query( 
                 func.count().label('total'),
@@ -210,8 +211,7 @@ class TeacherController:
                 ExamAttempt.examID == data.exam_id, 
                 cast(StudentExamLog.TIMESTAMP, Time).between(data.startTime, data.endTime)
             ).first()
-            print(f'start time = {data.startTime}')
-            print(f'end time = {data.endTime}')
+            
             if result: 
                 record = {
                     'total': result.total,
@@ -232,7 +232,7 @@ class TeacherController:
 
     @staticmethod
     def getStudentLogsWithImages(data: StudentLog, db: Session):
-        """get the logs with image evidences4"""
+        '''get the logs with image evidences'''
         try:
             result = db.query(
                 StudentExamLog.id.label('id'),
@@ -266,6 +266,7 @@ class TeacherController:
             
             return {'content': content}
         except Exception as e:
+            print(e)
             return {'error': f'database error {e}'}
         
     @staticmethod
@@ -280,7 +281,7 @@ class TeacherController:
                     os.remove(serverPath)      
                     db.delete(record)
                     db.commit()
-                    return {'success': 'record deleted', 'path' : serverPath}
+                    return {'success': 'record deleted'}
                 
                 else:
                     return {'fail': 'No image found on the server, Please try again.', 'path': serverPath}
