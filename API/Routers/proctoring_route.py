@@ -13,8 +13,8 @@ async def FaceMonitoring(file: UploadFile = File(...), attempt_id: int = Form(..
     return await ProctoringController.FaceProctoring(file, attempt_id, identity_no, db)
 
 @router.post('/voiceMonitoring')
-async def voiceMonitoring(file: UploadFile = File(...), db: Session=Depends(get_db)):
-    return await ProctoringController.VoiceProctoring(file)
+async def voiceMonitoring(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...), db: Session=Depends(get_db)):
+    return await ProctoringController.VoiceProctoring(file, attempt_id, identity_no, db)
     
 @router.post('/AddProctoringEvent')
 async def proctoring_event(file: UploadFile = File(...), EX_ID: int = Form(...),

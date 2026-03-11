@@ -25,7 +25,10 @@ counter = FaceCounter()
 predict = PoseEstimation()
 
 retina_face_model = RetinaFace.build_model() # Building Retina Face Model Once.
+
 pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring') # Points to Camera Monitoring folder
+audios_base_folder = str(root_dir / 'Assets/Audio/VoiceMonitoring') # Points to Voice Monitoring folder
+
 class ProctoringController:
     
     @staticmethod
@@ -35,7 +38,6 @@ class ProctoringController:
         print(f'attempt id: {attempt_id}')
         examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
         if examAttempt: 
-            proct = ProctoringController()
             content = await file.read()
             
             np_array = np.frombuffer(content, np.uint8)
@@ -80,7 +82,7 @@ class ProctoringController:
                         position = "Identity Mismatched. Unauthorized Person Detected!"
                     # return {"pose": pose}
                     
-                serverImagePath = proct.saveImageOnServer(content, attempt_id)
+                serverImagePath = ProctoringController.saveImageOnServer(content, attempt_id)
                 new_record.TIMESTAMP = datetime.now()
                 new_record.image_path = serverImagePath
                 # print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
@@ -94,7 +96,8 @@ class ProctoringController:
         else:
             return {'fail': 'no student record found. '}
 
-    def saveImageOnServer(self, image, attempt_id):
+    @staticmethod
+    def saveImageOnServer(image_bytes, attempt_id):
         '''Helper function to save the image on the server, by creating unique file name.'''
         image_path = os.path.join(pictures_base_folder, str(attempt_id))
         
@@ -105,20 +108,40 @@ class ProctoringController:
         print(filename)
         image_path = os.path.join(image_path, filename)
         
-        ProctoringController.saveFileOnServer(image, image_path)
+        ProctoringController.saveFileOnServer(image_bytes, image_path)
+        # with open(image_path, "wb") as f:
+        #     f.write(image)
+        return os.path.join(str(attempt_id), filename)
+    
+    @staticmethod
+    def saveAudioOnServer(audio_bytes, attempt_id):
+        '''Helper function to save the voice on the server, by creating unique file name.'''
+        audio_path = os.path.join(audios_base_folder, str(attempt_id))
+        
+        if not os.path.exists(audio_path):
+            os.mkdir(audio_path)
+        
+        filename = ProctoringController.getTimeStamp() + ".m4a"
+        audio_path = os.path.join(audio_path, filename)
+        
+        ProctoringController.saveFileOnServer(audio_bytes, audio_path)
         # with open(image_path, "wb") as f:
         #     f.write(image)
         return os.path.join(str(attempt_id), filename)
     
     
     @staticmethod
-    async def VoiceProctoring(file: UploadFile):
+    async def VoiceProctoring(file: UploadFile, attempt_id: int, identity_no: str, db: Session):
         '''Takes the audio and process and then save on the server. '''
         audio_bytes = await file.read()
         if audio_bytes is not None:
-            timeStamp = ProctoringController.getTimeStamp()
-            dir_path = str(root_dir / f"Assets/Audio/VoiceMonitoring/{timeStamp}.m4a")
-            ProctoringController.saveFileOnServer(audio_bytes, dir_path)
+            # timeStamp = ProctoringController.getTimeStamp()
+            # dir_path = str(root_dir / f"Assets/Audio/VoiceMonitoring/{timeStamp}.m4a")
+            # ProctoringController.saveFileOnServer(audio_bytes, dir_path)
+            
+            # Save Audio on server. 
+            audio_path = ProctoringController.saveAudioOnServer(audio_bytes, attempt_id)
+            print(f'Audio Path: {audio_path}')
         return
     # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
 

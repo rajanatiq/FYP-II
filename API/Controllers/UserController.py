@@ -90,7 +90,7 @@ class UserController:
 
 
     @staticmethod
-    async def checkLogin(file: UploadFile, id: int, db: Session):
+    async def checkLogin(file: UploadFile, identity_no: str, db: Session):
         from pathlib import Path
         DIR = Path(__file__).resolve().parent.parent.parent
         TEMP_IMAGE = "temp.jpg"
@@ -101,11 +101,12 @@ class UserController:
         try:
             # time.sleep(5)
             user = db.query(Users.ID, Users.Role, Users.Name).filter(
-                Users.identity_no == id
+                Users.identity_no == identity_no
             ).first()
     
             if user is None:
-                return {"status": "error", "details": "No User Found"}
+                
+                return {"status": "error", "detail": "No User Found"}
             else:
                 userId, role, name = user
                 
@@ -122,16 +123,17 @@ class UserController:
                     )
 
                     live_embedding = result[0]["embedding"] # type: ignore
-                    print(len(result))
+                    # print(len(result))
 
                 except Exception as e:
                     return {"status": "error", "detail": "Face not detected"}
 
                 # Build path of saved embedding
-                embedding_path = os.path.join(EMBEDDINGS_DIR, f"{id}.npy")
+                embedding_path = os.path.join(EMBEDDINGS_DIR, f"{identity_no}.npy")
 
                 # Check file exists
                 if not os.path.exists(embedding_path):
+                    print("Embedding not found for this ID")
                     return {"status": "error", "detail": "Embedding not found for this ID"}
 
                 # Load saved embedding
@@ -142,9 +144,11 @@ class UserController:
                     [live_embedding], # type: ignore
                     [saved_embedding] # type: ignore
                 )[0][0]
-                print(similarity)
+                
                 if similarity > THRESHOLD:
-                    id = 0
+                    
+                    id = 0 # Holds Teacher, Student or Admin ID.
+                    
                     if role.lower() == "teacher":
                         getID = db.query(Teacher.ID).filter(
                             Teacher.userID == userId
@@ -164,6 +168,7 @@ class UserController:
                         "name": name
                         }
                 else:
+                    print("Face not matched")
                     return {"status": "error", "detail": "Face not matched"}
                 
         except Exception as e:
