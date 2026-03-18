@@ -14,3 +14,5 @@ class ExamMCQ(Base):
     exam_rship = relationship('Exam', back_populates='mcq_rship')
     option_rship = relationship('MCQOption', back_populates='question_rship') #
     ans_rship = relationship('MCQAns', back_populates='question_rship') #
+    audio_chunks_des_rship = relationship('StudentMCQExamAudioChunk', back_populates='exam_mcq_qst_rship')
+    

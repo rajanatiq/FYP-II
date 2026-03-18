@@ -7,8 +7,7 @@ from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Student,
 
 from Schemas.StudentAnswer import StudentAnswer
 from Schemas.McqAnswer import McqAnswer
-from Schemas.AttemptedExam import AttemptedExam
-
+from sqlalchemy.orm import joinedload
 
 class StudentController:
 
@@ -16,6 +15,7 @@ class StudentController:
     def get_all_student(db: Session):
         result = db.query(Student).all()
         return [item.to_dict() for item in result]
+    
     
     @staticmethod
     def get_enrolled_courses(db: Session, student_id: int):

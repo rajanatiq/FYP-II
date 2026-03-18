@@ -13,3 +13,6 @@ class ExamAttempt(Base):
     mcqAns_rship = relationship('MCQAns', back_populates='examAttempt_rship') #
     desAns_rship = relationship('DesAns', back_populates='examAttempt_rship')
     log_rship = relationship("StudentExamLog", back_populates="examAttempt_rship")
+    
+    audio_chunks_mcq_rship = relationship("StudentMCQExamAudioChunk", back_populates="examAttempt_rship")
+    audio_chunks_des_rship = relationship("StudentDESCExamAudioChunk", back_populates="examAttempt_rship")

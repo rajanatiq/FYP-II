@@ -25,3 +25,5 @@ from .StudentBreak import *
 from .ExamRoom import *
 from .ExamAttempt import *
 from .StudentExamLog import *
+from .StudentMCQExamAudioChunk import *
+from .StudentDESCExamAudioChunk import *

@@ -13,3 +13,4 @@ class ExamDescQues(Base):
     # Relationships
     exam_rship = relationship('Exam', back_populates='desc_ques_rship')
     ans_rship = relationship('DesAns', back_populates='question_rship') #
+    audio_chunks_des_rship = relationship('StudentDESCExamAudioChunk', back_populates='exam_desc_qst_rship')

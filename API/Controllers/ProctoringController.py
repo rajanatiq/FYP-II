@@ -13,7 +13,7 @@ from Controllers.UserController import UserController
 root_dir = Path(__file__).resolve().parent.parent # Points to API Folder 
 
 # import Models
-from Models import (ProctoringEvent,CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt)
+from Models import (ProctoringEvent,CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
 
 # tarined models for prediction
 from ML.FaceCount.faceCount import FaceCounter
@@ -132,7 +132,7 @@ class ProctoringController:
     
     
     @staticmethod
-    async def VoiceProctoring(file: UploadFile, attempt_id: int, identity_no: str, db: Session):
+    async def VoiceProctoring(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, db: Session):
         '''Takes the audio and process and then save on the server. '''
         audio_bytes = await file.read()
         if audio_bytes is not None:
@@ -143,7 +143,31 @@ class ProctoringController:
             # Save Audio on server. 
             audio_path = ProctoringController.saveAudioOnServer(audio_bytes, attempt_id)
             print(f'Audio Path: {audio_path}')
-        return
+            
+            try:
+                if exam_type.lower() == 'mcq':
+                    new_record = StudentMCQExamAudioChunk(
+                        attemptID = attempt_id, 
+                        question_id = question_id, 
+                        chunk_url = audio_path
+                    )
+                    
+                else:
+                    new_record = StudentDESCExamAudioChunk(
+                        attempt_id = attempt_id, 
+                        question_id = question_id, 
+                        chunk_url = audio_path
+                    )
+
+                db.add(new_record)
+                db.commit()
+        
+            except Exception as e:
+                db.rollback()
+                return {'erorr': f'database error {e}'}
+        
+        return {'audio_path': f'{audio_path}'} # type: ignore
+    
     # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
 
     # MARK: Predict Pose using SVM ->
