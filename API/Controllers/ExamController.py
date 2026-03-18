@@ -185,6 +185,7 @@ class ExamController:
     @staticmethod
     def ifExamAlreadyAttempt(data: AttemptedExam, db:Session):
         """method to check if student has already attempted his exam or not to prevent duplication"""
+        return {"success": False, 'attempt_id': 7101}
         try:
             print(f"student id: {data.s_id}")
             print(f"Exam id: {data.e_id}")

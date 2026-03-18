@@ -69,6 +69,7 @@ class ProctoringController:
                 
                 else:
                     identity_verified = UserController.verifyPerson(identity_no)
+                    print(f"identity = {identity_verified}")
                     
                     if identity_verified == True:
                         pose = PoseEstimationClass.process_face_pose(image)

@@ -32,3 +32,7 @@ def getImages(data: StudentLog, db:Session = Depends(get_db)):
 @router.get('/deleteStudentLogRecord/{logId}')
 def deleteStudentLogRecord(logId: int, db: Session = Depends(get_db)):
     return TeacherController.deleteStudentLogRecord(logId, db)
+
+@router.get('/fetchStudentRecording/{std_id}/{exam_id}')
+def fetchStudentRecording(std_id: int, exam_id: int, db: Session = Depends(get_db)):
+    return TeacherController.fetchStudentRecording(std_id, exam_id, db)

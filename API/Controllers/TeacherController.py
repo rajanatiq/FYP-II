@@ -3,6 +3,7 @@ from sqlalchemy import extract, func, distinct, case, cast, Time
 from datetime import datetime
 from fastapi.responses import JSONResponse
 from Schemas.StudentLog import StudentLog
+from pydub import AudioSegment
 import os
 
 from pathlib import Path
@@ -11,8 +12,13 @@ root_dir = Path(__file__).resolve().parent.parent # Points to API Folder
 # import Models
 from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog)
 
-image_base_url = 'http://192.168.100.54:8000/images/'
+
+image_base_url = 'http://192.168.100.57:8000/images/'
+audio_base_url = 'http://192.168.100.57:8000/combinedAudios'
+
 pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring')
+audios_base_folder = str(root_dir / 'Assets/Audio/VoiceMonitoring')
+combined_audios_base_folder = str(root_dir / 'Assets/Audio/CombinedAudios')
 
 class TeacherController:
     @staticmethod
@@ -284,9 +290,51 @@ class TeacherController:
                     return {'success': 'record deleted'}
                 
                 else:
-                    return {'fail': 'No image found on the server, Please try again.', 'path': serverPath}
+                    return {'success': 'No image found on the server, Please try again.', 'path': serverPath}
             else:
                 return {'fail': 'no record found'}
         except Exception as e:
             db.rollback()
             return {'fail': f'database error {e}'}
+
+    @staticmethod
+    def fetchStudentRecording(std_id: int, exam_id: int, db: Session):
+        try:
+            record = db.query(ExamAttempt).filter(
+                ExamAttempt.studentID == std_id,
+                ExamAttempt.examID == exam_id
+            ).first()
+            
+            if record:
+                audio_folder = str(record.ID)
+                
+                # checking if audios are already combined or not ?
+                for file in os.listdir(combined_audios_base_folder):
+                    if file.endswith(f'{audio_folder}.m4a'):
+                        return {'fail': f'{os.path.join(combined_audios_base_folder, file)}'}
+                        
+                output_path = TeacherController.combineChunksInOneAudioFile(audio_folder)
+                    
+                return {'success': f'{output_path}'}
+            
+            else:
+                return {'fail': 'No Record Found'}
+                
+        except Exception as e:
+            return {'fail': f'database error {e}'}
+        
+    @staticmethod
+    def combineChunksInOneAudioFile(audio_folder: str):
+        chunk_dir = os.path.join(audios_base_folder, audio_folder)  
+       
+        files = sorted([ f for f in os.listdir(chunk_dir) if f.endswith('.m4a')])
+        
+        combined = AudioSegment.empty()
+        
+        for chunk in files:
+            combined += AudioSegment.from_file(os.path.join(chunk_dir, chunk), format="m4a")
+            
+        output_path =  os.path.join(combined_audios_base_folder, f"{audio_folder}.m4a")
+        combined.export(output_path, format="mp4")
+        
+        return output_path

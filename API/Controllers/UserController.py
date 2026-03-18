@@ -168,7 +168,7 @@ class UserController:
                         "name": name
                         }
                 else:
-                    print("Face not matched")
+                    print("Face not math")
                     return {"status": "error", "detail": "Face not matched"}
                 
         except Exception as e:

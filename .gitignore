@@ -11,7 +11,6 @@ __pycache__/
 Assets/
 Assets/*
 !Assets/.gitkeep
-!Assets/CombinedAudios
 Assets/**/*
 # keep folder in repo
 !Assets/.gitkeep
