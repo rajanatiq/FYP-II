@@ -24,3 +24,7 @@ async def proctoring_event(file: UploadFile = File(...), EX_ID: int = Form(...),
 @router.get("/studentViolationCount/{std_id}")
 def get_student_violation_count(std_id: int, db: Session = Depends(get_db)):
     return ProctoringController.get_student_cheating_count(std_id, db)
+
+@router.post('/verifyVoice')
+async def verify_voice(file: UploadFile = File(...), identity_no: str = Form(...)):
+    return await ProctoringController.verifyVoice(file, identity_no)

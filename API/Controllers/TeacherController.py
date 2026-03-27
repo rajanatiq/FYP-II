@@ -203,7 +203,7 @@ class TeacherController:
                 func.sum(case((StudentExamLog.position == 'right', 1), else_= 0)).label('right'),
                 func.sum(case((StudentExamLog.position == 'up', 1), else_= 0)).label('up'),
                 func.sum(case((StudentExamLog.position == 'down', 1), else_= 0)).label('down'),
-                func.sum(case((StudentExamLog.position == 'multiple faces', 1), else_= 0)).label('multiple_faces'),
+                func.sum(case((StudentExamLog.position == 'multiple face detected', 1), else_= 0)).label('multiple_faces'),
                 func.sum(case((StudentExamLog.isPresent == True, 1), else_= 0)).label('total_presence'),
                 func.sum(case((StudentExamLog.isPresent == False, 1), else_= 0)).label('total_absence'),
             ).select_from(StudentExamLog).join(
@@ -269,7 +269,9 @@ class TeacherController:
                 }
                 for data in result
             ]
-            
+            for item in content:
+                print(item['image_url'])
+
             return {'content': content}
         except Exception as e:
             print(e)

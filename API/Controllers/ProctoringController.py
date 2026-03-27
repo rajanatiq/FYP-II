@@ -297,6 +297,17 @@ class ProctoringController:
             return {"error": f"Error: {str(e)}"}, 500
 
 
+    @staticmethod
+    async def verifyVoice(file: UploadFile, identity_no: str):
+        '''Verify student voice against enrolled voice sample.'''
+        try:
+            from voice_verification import verify_student_voice
+            audio_bytes = await file.read()
+            result = verify_student_voice(identity_no, audio_bytes)
+            return result
+        except Exception as e:
+            return {"error": str(e)}
+
     # MARK: Helper Functions
     @staticmethod
     def saveFileOnServer(data: bytes, path: str):
