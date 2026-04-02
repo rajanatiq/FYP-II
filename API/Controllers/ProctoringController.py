@@ -144,6 +144,8 @@ class ProctoringController:
             audio_path = ProctoringController.saveAudioOnServer(audio_bytes, attempt_id)
             print(f'Audio Path: {audio_path}')
             
+            print(f"Exam Type: {exam_type.lower()}")
+            print(f'Identity no: {identity_no}')
             try:
                 if exam_type.lower() == 'mcq':
                     new_record = StudentMCQExamAudioChunk(
