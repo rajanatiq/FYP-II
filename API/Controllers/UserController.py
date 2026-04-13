@@ -105,7 +105,7 @@ class UserController:
             ).first()
     
             if user is None:
-                
+                print(f"No User Found. id: {identity_no}")
                 return {"status": "error", "detail": "No User Found"}
             else:
                 userId, role, name = user
@@ -126,6 +126,7 @@ class UserController:
                     # print(len(result))
 
                 except Exception as e:
+                    print("Face not detected.")
                     return {"status": "error", "detail": "Face not detected"}
 
                 # Build path of saved embedding
@@ -160,6 +161,7 @@ class UserController:
                         ).first()
                         id = getID[0] # type: ignore
         
+                    print("User Found.")
                     return {
                         "status": "success",
                         "id": id,
@@ -167,8 +169,9 @@ class UserController:
                         "role": role,
                         "name": name
                         }
+                    
                 else:
-                    print("Face not math")
+                    print("Face not match")
                     return {"status": "error", "detail": "Face not matched"}
                 
         except Exception as e:

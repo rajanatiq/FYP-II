@@ -26,3 +26,7 @@ def Add_McqAnswer(data: StudentAnswer, db: Session=Depends(get_db)):
 @router.get('/fetchAttemptId/{s_id}/{e_id}')
 def fetchExamAttemptID(s_id: int, e_id: int, db: Session = Depends(get_db)):
     return StudentController.fetchExamAttemptID(s_id, e_id, db)
+
+@router.get('/fetchStudentExams/{s_id}')
+def fetchStudentExams(s_id: int, db: Session = Depends (get_db)):
+    return StudentController.fetch_student_exams(s_id, db)

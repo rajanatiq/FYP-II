@@ -186,3 +186,38 @@ class StudentController:
         except Exception as e:
             return {'error': f'Database error {e}'}
         
+    @staticmethod
+    def fetch_student_exams(student_id: int, db: Session):
+        result = db.query(
+                    Exam.TITLE.label('examTitle'),
+                    Exam.E_DATE.label('examDate'),
+                    Exam.ID.label('examID'),
+                    Users.Name.label('teacherName')
+                ).join(CourseAllocation, CourseAllocation.ID == Exam.A_ID
+                ).join(CourseOffering, CourseOffering.ID == CourseAllocation.OfferingID
+                ).join(Teacher, Teacher.ID == CourseAllocation.TeacherID
+                ).join(Users, Users.ID == Teacher.userID
+                ).join(CourseEnrollment, CourseEnrollment.OfferingID == CourseOffering.ID
+                ).join(ExamAttempt, ExamAttempt.examID == Exam.ID
+                ).filter(
+                    ExamAttempt.studentID == student_id,
+                    CourseEnrollment.StudentID == student_id,
+                    CourseAllocation.status == 'allocated',
+                    CourseEnrollment.Status == 'enrolled'
+                ).all()
+
+        if not result:
+            return {'error': 'no exams found'}
+        else:
+            content = [
+                {
+                    'examID': exam.examID,
+                    'examTitle': exam.examTitle,
+                    'examDate': exam.examDate,
+                    'teacherName': exam.teacherName
+                }
+                for exam in result
+            ]
+            return {
+                'content': content
+            }
