@@ -4,9 +4,9 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 import urllib
 
 username = "sa"
-password = "123"
+password = "Macbookpro2019"
 # DESKTOP-OGHME3K\SQLEXPRESS
-server = "DESKTOP-OGHME3K\SQLEXPRESS"           # SQL Server instance
+server = "localhost"           # SQL Server instance
 database = "ExamProctoring"
 driver = "ODBC Driver 17 for SQL Server"
 

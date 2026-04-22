@@ -1,6 +1,7 @@
 from typing import List
 
-from Models import (ExamAttempt, MCQOption, ExamDescQues, ExamMCQ, Exam)
+from Schemas.SaveMcqAns import SaveMcqAns
+from Models import (ExamAttempt, MCQOption, ExamDescQues, ExamMCQ, Exam, MCQAns)
 # from Models import MCQOption
 # from Models import ExamDescQues
 from fastapi import UploadFile
@@ -52,6 +53,35 @@ class ExamController:
             "content": list(mcq_map.values())
         }
     
+    
+    @staticmethod
+    def fetch_desc_questions(db: Session, exam_id: int):
+        '''Method to fetch the descriptive questions of the exam for a particular exam. '''
+        
+        try:
+            rows = db.query(
+                ExamDescQues.ID.label('questionId'),
+                ExamDescQues.DESCRIPTION.label("question")
+            ).join(
+                Exam, ExamDescQues.E_ID == Exam.ID
+            ).filter(
+                Exam.ID == exam_id
+            ).all()
+            
+            if not rows:
+                return {'error':  'no questions found for this exam.'}
+            
+            content = [ 
+                    {
+                        "questionId": q.questionId,
+                        "question": q.question
+                    }
+                for q in rows ]
+            
+            return {"content": content}
+        except Exception as e:
+            return {'error': f'Database error: {e}'}
+
     @staticmethod
     def create_exam(data: ExamCreate, db: Session):
         new_exam = Exam(
@@ -226,3 +256,32 @@ class ExamController:
             db.rollback()
             return{'error': f'Database error {e}'}
         return
+    
+    @staticmethod
+    def save_mcq_answers(data: List[SaveMcqAns], attempt_id: int, db: Session):
+        """Method to save mcq answers of the student against his exam attempt."""
+        
+        try:
+            isExamAttempted = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
+            
+            if isExamAttempted:
+                
+                for ans in data:
+                    
+                    new_ans = MCQAns(
+                        M_ID = ans.mcqId,
+                        O_ID = ans.optionId,
+                        attemptID = attempt_id
+                    )
+                    
+                    db.add(new_ans)
+                    db.commit()
+                    return {'success': f'exam attempt found, {len(data)} answers to save'}
+            else:
+                return {'error': 'no exam attempt found for this attempt id.'}
+        
+        except Exception as e:
+            return {'error', f'db error {e}'}
+       
+        
+        

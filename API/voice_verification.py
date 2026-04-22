@@ -2,11 +2,6 @@ import os
 import io
 import torch
 
-# Compatibility fix for speechbrain + torch 2.2.2
-if not hasattr(torch.amp, 'custom_fwd'):
-    torch.amp.custom_fwd = torch.cuda.amp.custom_fwd
-    torch.amp.custom_bwd = torch.cuda.amp.custom_bwd
-
 import numpy as np
 import librosa
 
@@ -43,7 +38,7 @@ def get_embedding_from_bytes(audio_bytes: bytes) -> np.ndarray:
     waveform, _ = librosa.load(io.BytesIO(audio_bytes), sr=16000, mono=True)
     waveform_tensor = torch.tensor(waveform).unsqueeze(0)
     with torch.no_grad():
-        embedding = verification_model.encode_batch(waveform_tensor)
+        embedding = verification_model.encode_batch(waveform_tensor) #type: ignore
     return embedding.squeeze().numpy()
 
 def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:

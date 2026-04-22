@@ -1,6 +1,7 @@
 from typing import List
 from Schemas.ExamMcqCreate import ExamMCQCreate
 from Schemas.ExamCreate import ExamCreate
+from Schemas.SaveMcqAns import SaveMcqAns
 from fastapi import APIRouter, File, Request, Depends, UploadFile
 from sqlalchemy.orm import Session
 from db import get_db
@@ -16,7 +17,6 @@ session = Depends(get_db)
 def fetch_exams(courseID:int, db:Session=session):
     return StudentController.fetch_exams(db, courseID)
     
-
 @router.post('/createExam')
 def add_exam(exam: ExamCreate, db: Session = session):
     return ExamController.create_exam(exam, db)
@@ -29,14 +29,13 @@ def add_mcq_endpoint(mcq: List[ExamMCQCreate], db: Session = session):
 def delete_exam(id: int, db: Session = session):
     return ExamController.remove_exam(id, db)
 
-# @router.get('/fetchMcqs/{exam_id}')
-# def fetch_mcqs(exam_id:int, db:Session=Depends(get_db)):
-#     return StudentController.fetch_mcqs(db, exam_id) 
-
 @router.get('/fetchMcqs/{exam_id}')
 def fetch_mcqs(exam_id: int, db:Session= session):
     return ExamController.fetch_mcqs(db, exam_id)
 
+@router.get('/fetchDescQuestions/{exam_id}')
+def fetch_desc_questions(exam_id: int, db:Session = session):
+    return ExamController.fetch_desc_questions(db, exam_id)
 
 @router.post("/checkExamAttemptRecord")
 def ifExamAlreadyAttempt(data: AttemptedExam, db:Session = session):
@@ -50,3 +49,7 @@ def addStudentExamRecord(data: AttemptedExam, db:Session= session):
 def setExamStatusToComplete(exam_id: int, db: Session=session):
     return ExamController.setExamStatusToComplete(exam_id, db)
 
+# MARK: POST METHODS
+@router.post('/saveMcqAnswers')
+def save_mcq_answers(data: List[SaveMcqAns], attempt_id: int, db: Session = session):
+    return ExamController.save_mcq_answers(data,attempt_id, db)

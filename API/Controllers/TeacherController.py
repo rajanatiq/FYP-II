@@ -24,6 +24,7 @@ class TeacherController:
     @staticmethod
     def teacherAllocatedCourses(t_id: int, session: str ,db:Session):
         current_year = datetime.now().year
+        
         try:
             result = db.query(
                 CourseAllocation.ID.label('allocationID'), 

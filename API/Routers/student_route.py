@@ -19,7 +19,7 @@ def get_enrolled_courses(id:int, db:Session = Depends(get_db)):
 def fetch_exams(id: int, db: Session = Depends(get_db)):
     return StudentController.fetch_exams(db, id)   
 
-@router.post('/AddMcqAnswer/')
+@router.post('/AddMcqAnswer')
 def Add_McqAnswer(data: StudentAnswer, db: Session=Depends(get_db)):
     return StudentController.Add_McqAnswer (data, db)
 
