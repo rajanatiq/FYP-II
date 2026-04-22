@@ -37,7 +37,7 @@ class TeacherController:
                 CourseOffering.Semester.label('semester'),
                 func.year(CourseAllocation.AllocationDate)
             ).join(
-                CourseOffering, CourseOffering.ID == CourseAllocation.ID
+                CourseOffering, CourseOffering.ID == CourseAllocation.OfferingID
             ).join(
                 Course, Course.ID == CourseOffering.CourseID
             ).join(

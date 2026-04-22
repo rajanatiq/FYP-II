@@ -1,6 +1,12 @@
 import os
 import io
 import torch
+
+# Compatibility fix for speechbrain + torch 2.2.2
+if not hasattr(torch.amp, 'custom_fwd'):
+    torch.amp.custom_fwd = torch.cuda.amp.custom_fwd
+    torch.amp.custom_bwd = torch.cuda.amp.custom_bwd
+
 import numpy as np
 import librosa
 

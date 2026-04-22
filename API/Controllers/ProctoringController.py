@@ -21,6 +21,8 @@ from ML.pose_estimation_yaw_pitch.Training.predict_pose import PoseEstimation
 from ML.PoseEstimationPivot.PoseEstimation import PoseEstimationClass
 from ML.faceCount import FaceCounter
 
+from voice_verification import verify_student_voice
+
 counter = FaceCounter()
 predict = PoseEstimation()
 
@@ -303,12 +305,15 @@ class ProctoringController:
     async def verifyVoice(file: UploadFile, identity_no: str):
         '''Verify student voice against enrolled voice sample.'''
         try:
-            from voice_verification import verify_student_voice
             audio_bytes = await file.read()
-            result = verify_student_voice(identity_no, audio_bytes)
-            return result
+            
+            if file.filename.split(".")[-1].lower() == "mp3": #type: ignore
+                result = verify_student_voice(identity_no, audio_bytes)
+                return result
+            else: 
+                return {"success": False, "error": "unprocessable format"}
         except Exception as e:
-            return {"error": str(e)}
+            return {"success": False, "error": str(e)}
 
     # MARK: Helper Functions
     @staticmethod
