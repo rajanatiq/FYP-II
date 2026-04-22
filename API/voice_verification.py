@@ -38,7 +38,9 @@ load_all_embeddings()
 stt_model = whisper.load_model("base")
 
 def transcribe_audio(file_path: str) -> str:
-    result = stt_model.transcribe(file_path)
+    # Load via librosa to avoid ffmpeg dependency; whisper accepts numpy arrays
+    audio, _ = librosa.load(file_path, sr=16000, mono=True)
+    result = stt_model.transcribe(audio)
     return result["text"].strip()
 
 def extract_speech_segments(audio_bytes: bytes):
