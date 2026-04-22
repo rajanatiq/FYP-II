@@ -1,4 +1,5 @@
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi.staticfiles import StaticFiles
@@ -15,22 +16,35 @@ from db import SessionLocal
 from Routers import student_route, user_route, admin_route, proctoring_route, exam_route, teacher_route
 import Models
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        print("SUCCESS: Successfully connected to database 'Exam Proctoring'.\n")
+        db.close()
+    except Exception as e:
+        print(f"\nERROR: Connection failed.\nDetails: {e}\n")
+    yield
+
+
 # ---------------- FastAPI instance ----------------
-app = FastAPI(title="FYP Project API")
+app = FastAPI(title="FYP Project API", lifespan=lifespan)
 
 
 app.mount("/images", StaticFiles(directory="Assets/Images/CameraMonitoring"), name="images")
 app.mount("/combinedAudios", StaticFiles(directory="Assets/Audio/CombinedAudios"), name="combinedAudios")
 
 # allows the request from frontEnd or Postman
-origins = ["*"] 
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],         
-    allow_headers=["*"],         
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(user_route.router)
@@ -41,17 +55,3 @@ app.include_router(proctoring_route.router)
 app.include_router(teacher_route.router)
 #app.include_router(voice_route.router)
 
-@app.on_event("startup")
-def startup_event():
-    """
-    Ye function server ke start hone par DB connection check karega
-    """
-    try:
-        db = SessionLocal()
-        db.execute(text("SELECT 1"))  # simple query to test DB connection
-        print("SUCCESS: Successfully connected to database 'Exam Proctoring'.\n")
-        db.close()
-    except Exception as e:
-        print(f"\nERROR: Connection failed.\nDetails: {e}\n")
-
-#  This is testing to check the connection.
