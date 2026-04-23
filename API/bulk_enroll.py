@@ -10,7 +10,7 @@ os.environ["HF_HUB_OFFLINE"] = "1"
 
 from speechbrain.pretrained import SpeakerRecognition
 
-ENROLLMENT_FOLDER = r"D:\FYP-II(Backend)\FYP-II\EnrollmentAudios"
+ENROLLMENT_FOLDER = r"../EnrollmentAudios"
 EMBEDDINGS_DIR = os.path.join(os.path.dirname(__file__), "voice_samples")
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "pretrained_models/spkrec-ecapa-voxceleb")
 os.makedirs(EMBEDDINGS_DIR, exist_ok=True)
@@ -24,7 +24,7 @@ def get_embedding(audio_path: str) -> np.ndarray:
     waveform, sr = librosa.load(audio_path, sr=16000, mono=True)
     waveform_tensor = torch.tensor(waveform).unsqueeze(0)
     with torch.no_grad():
-        embedding = model.encode_batch(waveform_tensor)
+        embedding = model.encode_batch(waveform_tensor) #type: ignore
     return embedding.squeeze().numpy()
 
 def enroll_all():
@@ -32,10 +32,10 @@ def enroll_all():
                        if os.path.isdir(os.path.join(ENROLLMENT_FOLDER, f))]
 
     if not student_folders:
-        print("Koi student folder nahi mila.")
+        print("No student folders found.")
         return
 
-    print(f"{len(student_folders)} students mile — processing...\n")
+    print(f"{len(student_folders)} processing...\n")
     success, failed = 0, []
 
     for student_id in student_folders:
@@ -44,7 +44,7 @@ def enroll_all():
                        if f.lower().endswith((".ogg", ".wav", ".mp3"))]
 
         if not audio_files:
-            print(f"❌ Student {student_id} — koi audio nahi mili")
+            print(f"No audio found for Student {student_id}")
             failed.append(student_id)
             continue
 
@@ -56,18 +56,18 @@ def enroll_all():
                 emb = get_embedding(audio_path)
                 embeddings.append(emb)
 
-            # Average all embeddings → one final embedding per student
+            # Average all embeddings -> one final embedding per student
             final_embedding = np.mean(embeddings, axis=0)
 
             # Save as .npy
             save_path = os.path.join(EMBEDDINGS_DIR, f"{student_id}.npy")
             np.save(save_path, final_embedding)
 
-            print(f"✅ Student {student_id} enrolled ({len(audio_files)} audios averaged)")
+            print(f"Student {student_id} enrolled ({len(audio_files)} audios averaged)")
             success += 1
 
         except Exception as e:
-            print(f"❌ Student {student_id} failed: {e}")
+            print(f"Student {student_id} failed: {e}")
             failed.append(student_id)
 
     print(f"\nDone — {success} enrolled, {len(failed)} failed")

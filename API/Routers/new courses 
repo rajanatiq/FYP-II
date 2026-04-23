@@ -1,0 +1,61 @@
+SELECT * from Department
+SELECT * from Section
+SELECT * from CourseOffering WHERE year = 2026
+SELECT * from Student
+SELECT * FROM CourseEnrollment
+
+
+SELECT  u.Name, cf.Semester , sc.NAME as SectionName, c.Title as CourseTitle FROM section  sc
+JOIN student st on sc.ID = st.Section
+JOIN users u on u.ID = st.userID
+JOIN CourseEnrollment ce on ce.StudentID = st.StudentID
+JOIN CourseOffering cf on cf.ID = ce.OfferingID
+JOIN CourseAllocation ca on ca.OfferingID = cf.ID
+JOIN Course c on c.ID = cf.CourseID
+WHERE ce.status = 'enrolled' 
+and ca.[status] = 'allocated'
+
+SELECT * from Department
+SELECT * from CourseEnrollment
+
+SELECT * from CourseOffering
+-- Course id, semseter, departement, year, session
+INSERT into CourseOffering values (1002, 8, 1, '2026', 'SPRING') -- offering id, 1014
+INSERT into CourseOffering values (1003, 8, 1, '2026', 'SPRING') -- offering id, 1015
+INSERT into CourseOffering values (1004, 8, 1, '2026', 'SPRING') -- offering id, 1016
+
+SELECT * From CourseAllocation
+-- TeacherID, OfferingID, Section, allocation date, status
+INSERT into CourseAllocation VALUES (1002, 1014, 1, '2026-01-01', 'allocated') -- allocation id, 17
+INSERT into CourseAllocation VALUES (1003, 1015, 1, '2026-01-01', 'allocated') -- allocation id, 18
+INSERT into CourseAllocation VALUES (1002, 1016, 1, '2026-01-01', 'allocated') -- allocation id, 19
+
+SELECT * from CourseEnrollment
+-- StudentID, OfferingID, EnrollmentDate, status
+INSERT into CourseEnrollment values (8, 1014, '2026-01-01', 'enrolled') -- enrollment id, 2004
+INSERT into CourseEnrollment values (8, 1015, '2026-01-01', 'enrolled') -- enrollment id, 2005
+INSERT into CourseEnrollment values (8, 1016, '2026-01-01', 'enrolled') -- enrollment id, 2006
+
+
+
+SELECT * from Course WHERE COURSE_CODE = 'CSC-303' or COURSE_CODE = 'CSC-312'
+INSERT INTO Course VALUES ('CSC-303', 'Database Systems', 3, 1)
+
+SELECT * from Course WHERE COURSE_CODE = 'SSH-402' or COURSE_CODE = 'SSH-403' or COURSE_CODE = 'SSH-404'
+
+
+
+SELECT * from Users
+SELECT * from Teacher
+INSERT into Teacher values (14, 'Lecturer', '09', 'BSCS')
+
+update CourseAllocation set [status] = 'completed' WHERE id = 15
+SELECT * From CourseEnrollment  WHERE StudentID = 8 
+update CourseEnrollment set status = 'completed' WHERE id = 2003
+
+insert into CourseEnrollment values (8, 1013, '2025-01-01', 'completed')
+
+SELECT * from Student WHERE userID = 11
+
+-- Malik Awais - Stundent id = 8, 
+

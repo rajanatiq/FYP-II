@@ -33,3 +33,31 @@ class Student(Base):
             "Intake": self.Intake,
             "YEAR": self.YEAR
         }
+        
+        
+        
+#  Query to calculate the current semseter of a student based on intake and year. 
+
+# SELECT 
+#     StudentID,
+#     intake,
+#     [YEAR],
+
+#     (
+#         (YEAR(GETDATE()) - [YEAR]) * 2
+#         +
+#         (
+#             CASE 
+#                 WHEN MONTH(GETDATE()) BETWEEN 1 AND 8 THEN 1   -- Spring
+#                 WHEN MONTH(GETDATE()) BETWEEN 9 AND 12 THEN 2  -- Fall
+#             END
+#             -
+#             CASE 
+#                 WHEN intake = 'spring' THEN 1
+#                 WHEN intake = 'fall' THEN 2
+#             END
+#         )
+#         + 1
+#     ) AS current_semester
+
+# FROM Student

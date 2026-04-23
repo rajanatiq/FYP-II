@@ -14,8 +14,7 @@ from Controllers.UserController import UserController
 root_dir = Path(__file__).resolve().parent.parent  # Points to API Folder
 
 # import Models
-from Models import (ProctoringEvent, CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt,
-                    StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
+from Models import (ProctoringEvent, CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
 
 # tarined models for prediction
 from ML.FaceCount.faceCount import FaceCounter
@@ -134,15 +133,17 @@ class ProctoringController:
         return os.path.join(str(attempt_id), filename)
 
     @staticmethod
-    async def VoiceProctoring(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str,
-                              db: Session):
-        '''Saves audio, runs speaker verification. If mismatch → transcribe and store in DB.'''
+    async def VoiceProctoring(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, db: Session):
+        '''Saves audio, runs speaker verification. If mismatch, transcribe and store in DB.'''
+        
         audio_bytes = await file.read()
         if not audio_bytes:
             return {'error': 'no audio received'}
 
         ext = file.filename.split(".")[-1] if file.filename else "wav"
+        
         relative_path = ProctoringController.saveAudioOnServer(audio_bytes, attempt_id, question_id, ext)
+        
         full_path = os.path.join(audios_base_folder, relative_path)
         print(f'Audio saved: {relative_path}')
 
@@ -157,20 +158,22 @@ class ProctoringController:
             score = verification.get("score", 0)
             print(f'Voice match: {is_match}, score: {score}')
 
-            if not is_match:
-                transcript = transcribe_audio(full_path)
-                try:
-                    new_record = StudentMCQExamAudioChunk(
+            new_record = StudentMCQExamAudioChunk(
                         attemptID=attempt_id,
                         question_id=question_id,
-                        chunk_url=relative_path,
-                        transcript=transcript
+                        chunk_url=relative_path
                     )
-                    db.add(new_record)
-                    db.commit()
-                except Exception as e:
-                    db.rollback()
-                    return {'error': f'database error {e}'}
+            
+            if not is_match:
+                transcript = transcribe_audio(full_path)
+                new_record.transcript = transcript
+                
+            try:
+                db.add(new_record)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                return {'error': f'database error {e}'}
 
                 return {'status': 'suspicious', 'score': score, 'transcript': transcript}
 
