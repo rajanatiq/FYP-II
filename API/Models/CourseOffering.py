@@ -1,6 +1,7 @@
 from db import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, Float
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+
 
 class CourseOffering(Base):
     __tablename__ = 'courseoffering'
@@ -9,8 +10,8 @@ class CourseOffering(Base):
     CourseID = Column(Integer, ForeignKey('course.ID'), nullable=False)
     Semester = Column(Integer, nullable=False)
     DEPARTMENT = Column(Integer, ForeignKey('department.ID'))
-    Year = Column(Integer, nullable=False)
-    SESSION = Column(String(10))
+    Year: Mapped[int] = mapped_column()
+    SESSION : Mapped[str] = mapped_column(String())
 
     # Relationships
     course_rship = relationship('Course', back_populates='offering_rship')

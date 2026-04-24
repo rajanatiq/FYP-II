@@ -1,4 +1,4 @@
-SELECT * from Department
+SELECT * from Department WHERE id = 1
 SELECT * from Section
 SELECT * from CourseOffering WHERE year = 2026
 SELECT * from Student
@@ -17,8 +17,13 @@ and ca.[status] = 'allocated'
 
 SELECT * from Department
 SELECT * from CourseEnrollment
+SELECT * from Section WHERE id = 1
+SELECT * from Course
+DELETE from Course where id =2004
+SELECT * from CourseOffering WHERE CourseID = 2003
 
-SELECT * from CourseOffering
+SELECT t.ID from Users u join Teacher t on t.userID = u.ID WHERE name  = 'khalid'
+
 -- Course id, semseter, departement, year, session
 INSERT into CourseOffering values (1002, 8, 1, '2026', 'SPRING') -- offering id, 1014
 INSERT into CourseOffering values (1003, 8, 1, '2026', 'SPRING') -- offering id, 1015
@@ -37,7 +42,7 @@ INSERT into CourseEnrollment values (8, 1015, '2026-01-01', 'enrolled') -- enrol
 INSERT into CourseEnrollment values (8, 1016, '2026-01-01', 'enrolled') -- enrollment id, 2006
 
 
-
+SELECT * from Course WHERE COURSE_CODE = 'SSH-404'
 SELECT * from Course WHERE COURSE_CODE = 'CSC-303' or COURSE_CODE = 'CSC-312'
 INSERT INTO Course VALUES ('CSC-303', 'Database Systems', 3, 1)
 
