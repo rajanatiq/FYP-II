@@ -14,3 +14,4 @@ Assets/*
 Assets/**/*
 # keep folder in repo
 !Assets/.gitkeep
+newcourses/
