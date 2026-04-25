@@ -86,7 +86,7 @@ class AdminController:
     def makeOffering(excelFile: BytesIO, db:Session):
         
         df = pd.read_excel(excelFile)
-        row, columns = df.shape
+        rows, columns = df.shape
         
         fileContent = []
         offeringList = []
@@ -95,8 +95,18 @@ class AdminController:
         offeringId = 0
         sectionId = 0
         
-        for i in range(row):
-            fileContent.append(df.iloc[i].to_dict())
+        month = AdminController.getCurrentMonth()
+        
+        session = 'spring' if 1 <= month <=8 else "fall"
+        
+        # coursesAlreadyInOffering = AdminController.getAllCourseOfferingID(db, AdminController.getCurrentYear(), session)
+            
+        for i in range(rows):
+            
+            row = df.iloc[i]
+            
+            if not row.isnull().all():
+                fileContent.append(df.iloc[i].to_dict())
         
         for i in fileContent:
             
@@ -161,7 +171,7 @@ class AdminController:
             
             teacherName = i.get('Teacher Name')
             teacherId = AdminController.fetchTeacherId(teacherName, db)
-            
+              
             if teacherId != 0:
                 print(f'Teacher ID: {teacherId}')
                 
@@ -175,6 +185,7 @@ class AdminController:
                     AllocationDate = AdminController.getCurrentDate(),
                     status = 'allocated'
                 )
+                
                 
                 allocationList.append(new_all)
                     
@@ -202,7 +213,7 @@ class AdminController:
         ).join(
             Users, Teacher.userID == Users.ID
         ).filter(
-            Users.Name == teacherName
+            Users.Name.like(f'%{teacherName}%')
         ).first()
         
         return record[0] if record else 0
@@ -245,3 +256,11 @@ class AdminController:
     @staticmethod
     def getCurrentDate():
         return datetime.now()
+    
+
+    @staticmethod
+    def getAllCourseOfferingID(db: Session, year: int, session: str):
+        allcourses = db.query(CourseOffering.ID).filter(CourseOffering.Year == year, CourseOffering.SESSION == session).all()
+        return [
+            i[0] for i in allcourses
+        ]
