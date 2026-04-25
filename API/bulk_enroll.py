@@ -1,14 +1,27 @@
 import os
+import sys
+import types
 import numpy as np
 import torch
-import torchaudio
 import librosa
-import soundfile as sf
+
+if "k2" not in sys.modules:
+    sys.modules["k2"] = types.ModuleType("k2")
 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["HF_HUB_OFFLINE"] = "1"
 
-from speechbrain.pretrained import SpeakerRecognition
+from speechbrain.inference.speaker import SpeakerRecognition
+
+for _sb_missing in [
+    "speechbrain.integrations.huggingface",
+    "speechbrain.integrations.huggingface.wordemb",
+    "speechbrain.integrations.nlp",
+]:
+    if _sb_missing not in sys.modules:
+        _m = types.ModuleType(_sb_missing.split(".")[-1])
+        _m.__path__ = []
+        sys.modules[_sb_missing] = _m
 
 ENROLLMENT_FOLDER = r"../EnrollmentAudios"
 EMBEDDINGS_DIR = os.path.join(os.path.dirname(__file__), "voice_samples")

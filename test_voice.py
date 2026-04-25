@@ -1,29 +1,168 @@
 """
 Standalone test server for voice verification + transcription.
 Run: python test_voice_server.py
-Postman: POST http://localhost:8001/test-voice
-  - Form-data key: "audio"       (type: File)  → .wav/.ogg/.mp3
-  - Form-data key: "identity_no" (type: Text)  → e.g. 2022-arid-4079
+
+BEFORE RUNNING:
+    pip install pyannote.audio
+    set HF_TOKEN=your_huggingface_token   (free token from huggingface.co)
+
+ENDPOINTS:
+    POST http://localhost:8001/test-voice
+        Original endpoint — single score, no diarization.
+        Form-data: audio (File), identity_no (Text)
+
+    POST http://localhost:8001/test-voice-diarize
+        New endpoint — diarization-aware.
+        Single speaker  → standard ECAPA verify, plain transcript on mismatch.
+        Multiple speakers → labeled transcript, student-only ECAPA score.
+        Form-data: audio (File), identity_no (Text)
 """
 
 import sys
 import os
+import numpy as np
+import librosa
 
 API_DIR = os.path.join(os.path.dirname(__file__), "FYP-II(Backend)", "FYP-II", "API")
 sys.path.insert(0, API_DIR)
 
+# voice_verification sets HF_HUB_OFFLINE=1 on import — clear it so pyannote can download
+import API.voice_verification  # noqa: F401 — triggers model + embedding load
+os.environ.pop("HF_HUB_OFFLINE", None)
+
+from API.voice_verification import (
+    verify_student_voice,
+    transcribe_audio,
+    get_embedding_from_waveform,
+    cosine_similarity,
+    enrolled_embeddings,
+    stt_model,
+    MATCH_THRESHOLD,
+)
+
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, Form
 
-from API.voice_verification import verify_student_voice, transcribe_audio
+DIARIZATION_AVAILABLE = True
+print("[DIARIZATION] Using ECAPA-based speaker diarization (no pyannote needed).")
 
 app = FastAPI(title="Voice Test Server")
 
 
+# ---------------------------------------------------------------------------
+# ECAPA sliding-window diarization (no pyannote, uses already-loaded model)
+# ---------------------------------------------------------------------------
+
+def _diarize_by_identity(audio_path: str, identity_no: str,
+                         window_sec: float = 3.0, stride_sec: float = 1.5) -> tuple:
+    """
+    Classifies each window directly against the enrolled student embedding.
+    Returns:
+        segments  : [(start_sec, end_sec, "STUDENT"|"OTHER"), ...]
+        best_score: float  — highest per-window similarity to enrolled student
+    """
+    enrolled = enrolled_embeddings.get(identity_no)
+    waveform, sr = librosa.load(audio_path, sr=16000, mono=True)
+    total_sec = len(waveform) / sr
+    window = int(window_sec * sr)
+    stride = int(stride_sec * sr)
+
+    if enrolled is None or len(waveform) < window:
+        return [(0.0, round(total_sec, 2), "STUDENT")], 0.0
+
+    window_labels = []
+    pos = 0
+    while pos + window <= len(waveform):
+        chunk = waveform[pos: pos + window]
+        emb = get_embedding_from_waveform(chunk)
+        sim = cosine_similarity(enrolled, emb)
+        start = round(pos / sr, 2)
+        end = round((pos + window) / sr, 2)
+        label = "STUDENT" if sim >= MATCH_THRESHOLD * 0.85 else "OTHER"
+        print(f"[DIAR-DEBUG] {start}s-{end}s  sim={sim:.4f}  → {label}")
+        window_labels.append((start, end, label, sim))
+        pos += stride
+
+    best_score = max(w[3] for w in window_labels)
+
+    # Merge consecutive windows with the same label
+    # Boundary = midpoint between previous window's end and current window's start
+    segments = []
+    seg_start = window_labels[0][0]
+    cur_label = window_labels[0][2]
+    for i in range(1, len(window_labels)):
+        if window_labels[i][2] != cur_label:
+            boundary = round((window_labels[i - 1][1] + window_labels[i][0]) / 2, 2)
+            segments.append((seg_start, boundary, cur_label))
+            seg_start = boundary
+            cur_label = window_labels[i][2]
+    segments.append((seg_start, round(total_sec, 2), cur_label))
+    return segments, round(best_score, 4)
+
+
+def _build_labeled_transcript(audio_path: str, diar_segments: list,
+                               identity_no: str, best_score: float = 0.0):
+    """
+    Returns (labeled_transcript: str, score: float, is_match: bool)
+    diar_segments labels are already "STUDENT" or "OTHER" from _diarize_by_identity.
+    """
+    waveform, sr = librosa.load(audio_path, sr=16000, mono=True)
+    is_match = best_score >= MATCH_THRESHOLD
+
+    whisper_result = stt_model.transcribe(waveform, verbose=None, language="en", word_timestamps=True)
+    whisper_segments = whisper_result.get("segments", [])
+
+    def label_for_time(t: float) -> str:
+        for s, e, lbl in diar_segments:
+            if s <= t <= e:
+                return lbl
+        return "OTHER"
+
+    # collect all words with their timestamps
+    all_words = []
+    for seg in whisper_segments:
+        for w in seg.get("words", []):
+            all_words.append({
+                "word": w["word"],
+                "start": w["start"],
+                "end": w["end"],
+                "label": label_for_time((w["start"] + w["end"]) / 2),
+            })
+
+    # group consecutive words with same label
+    parts = []
+    if all_words:
+        cur_label = all_words[0]["label"]
+        cur_start = all_words[0]["start"]
+        cur_words = [all_words[0]["word"]]
+        cur_end = all_words[0]["end"]
+
+        for w in all_words[1:]:
+            if w["label"] == cur_label:
+                cur_words.append(w["word"])
+                cur_end = w["end"]
+            else:
+                display = "Student" if cur_label == "STUDENT" else "Other"
+                parts.append(f"{display} ({cur_start:.1f}s-{cur_end:.1f}s):{' '.join(cur_words)}")
+                cur_label = w["label"]
+                cur_start = w["start"]
+                cur_words = [w["word"]]
+                cur_end = w["end"]
+
+        display = "Student" if cur_label == "STUDENT" else "Other"
+        parts.append(f"{display} ({cur_start:.1f}s-{cur_end:.1f}s):{' '.join(cur_words)}")
+
+    return " | ".join(parts), best_score, is_match
+
+
+# ---------------------------------------------------------------------------
+# Original endpoint — untouched logic
+# ---------------------------------------------------------------------------
+
 @app.post("/test-voice")
 async def test_voice(
     audio: UploadFile = File(...),
-    identity_no: str = Form(...)
+    identity_no: str = Form(...),
 ):
     audio_bytes = await audio.read()
 
@@ -32,7 +171,6 @@ async def test_voice(
     print(f"  Identity No : {identity_no}")
     print(f"{'='*50}")
 
-    # --- Voice Verification ---
     print("\n[STEP 1] Running voice verification...")
     verification = verify_student_voice(identity_no, audio_bytes)
 
@@ -52,12 +190,11 @@ async def test_voice(
         print(f"[VERIFICATION] Score  : {score}  (threshold = 0.75)")
         ver_result = {"no_speech": False, "is_match": is_match, "score": score}
 
-    # --- Transcription ---
     print("\n[STEP 2] Extracting transcript with Whisper...")
     transcript = None
     transcript_error = None
 
-    suffix = os.path.splitext(audio.filename)[-1] or ".wav"
+    suffix = os.path.splitext(audio.filename or "")[-1] or ".wav"
     tmp_path = os.path.join(os.path.dirname(__file__), f"_temp_audio{suffix}")
 
     with open(tmp_path, "wb") as f:
@@ -81,6 +218,91 @@ async def test_voice(
         "transcript": transcript,
         "transcript_error": transcript_error,
     }
+
+
+# ---------------------------------------------------------------------------
+# New diarization-aware endpoint
+# ---------------------------------------------------------------------------
+
+@app.post("/test-voice-diarize")
+async def test_voice_diarize(
+    audio: UploadFile = File(...),
+    identity_no: str = Form(...),
+):
+    if not DIARIZATION_AVAILABLE:
+        return {
+            "error": (
+                "pyannote not available. "
+                "Run: pip install pyannote.audio  "
+                "and set HF_TOKEN env var (free at huggingface.co)."
+            )
+        }
+
+    audio_bytes = await audio.read()
+
+    print(f"\n{'='*50}")
+    print(f"  [DIARIZE] Audio File  : {audio.filename}")
+    print(f"  [DIARIZE] Identity No : {identity_no}")
+    print(f"{'='*50}")
+
+    suffix = os.path.splitext(audio.filename or "")[-1] or ".wav"
+    tmp_path = os.path.join(os.path.dirname(__file__), f"_temp_diarize{suffix}")
+
+    with open(tmp_path, "wb") as f:
+        f.write(audio_bytes)
+
+    try:
+        # Step 1 — Identify student vs other windows directly
+        print("\n[STEP 1] Running identity-based diarization...")
+        diar_segments, best_score = _diarize_by_identity(tmp_path, identity_no)
+        unique_labels = {s[2] for s in diar_segments}
+        has_other = "OTHER" in unique_labels
+        print(f"[DIARIZATION] Segments: {diar_segments}")
+        print(f"[DIARIZATION] Other speaker present: {has_other}")
+
+        is_match = best_score >= MATCH_THRESHOLD
+
+        # ----------------------------------------------------------------
+        # Case A: Only student detected — plain result
+        # ----------------------------------------------------------------
+        if not has_other:
+            print(f"\n[STEP 2] Only student detected — score: {best_score}")
+            transcript = None
+            if not is_match:
+                print("[STEP 3] Mismatch — transcribing full audio...")
+                transcript = transcribe_audio(tmp_path)
+                print(f'[TRANSCRIPT] "{transcript}"')
+
+            return {
+                "speakers": 1,
+                "is_match": is_match,
+                "score": best_score,
+                "transcript": transcript,
+            }
+
+        # ----------------------------------------------------------------
+        # Case B: Other speaker detected — labeled transcript
+        # ----------------------------------------------------------------
+        print("\n[STEP 2] Other speaker detected — building labeled transcript...")
+        labeled_transcript, score, _ = _build_labeled_transcript(
+            tmp_path, diar_segments, identity_no, best_score
+        )
+        print(f"[VERIFICATION] score: {score} — MISMATCH (other speaker detected)")
+        print(f'[TRANSCRIPT] "{labeled_transcript}"')
+
+        return {
+            "speakers": len(unique_labels),
+            "is_match": False,
+            "score": score,
+            "transcript": labeled_transcript,
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 if __name__ == "__main__":

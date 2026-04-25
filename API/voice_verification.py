@@ -1,14 +1,34 @@
+import sys
 import os
 import io
-import torch
-import whisper
+import types
 import numpy as np
 import librosa
+import torch
+import whisper
+
+# k2 is an optional SpeechBrain integration — mock it so imports don't fail
+if "k2" not in sys.modules:
+    sys.modules["k2"] = types.ModuleType("k2")
 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["HF_HUB_OFFLINE"] = "1"
 
-from speechbrain.pretrained import SpeakerRecognition
+from speechbrain.inference.speaker import SpeakerRecognition
+
+# SpeechBrain 1.0 LazyModule stubs try to import these sub-packages at runtime.
+# They don't exist, so pre-populate sys.modules with dummy packages.
+# importlib.import_module checks sys.modules first — so no real import is attempted.
+for _sb_missing in [
+    "speechbrain.integrations.huggingface",
+    "speechbrain.integrations.huggingface.wordemb",
+    "speechbrain.integrations.nlp",
+]:
+    if _sb_missing not in sys.modules:
+        _m = types.ModuleType(_sb_missing.split(".")[-1])
+        _m.__path__ = []
+        sys.modules[_sb_missing] = _m
+del _sb_missing, _m
 
 VOICE_SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "voice_samples")
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "pretrained_models/spkrec-ecapa-voxceleb")
