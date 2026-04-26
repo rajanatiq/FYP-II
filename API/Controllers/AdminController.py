@@ -5,6 +5,7 @@ from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Course, 
 from io import BytesIO
 import pandas as pd
 from datetime import datetime
+from sqlalchemy import func, extract
 
 class AdminController:
     @staticmethod
@@ -66,26 +67,19 @@ class AdminController:
 
         excel_file = BytesIO(content)
     
+        print(f'File received: {file.filename}')
         if file.filename.split(".")[-1] == "xlsx": #type: ignore
-            courseOffering =  AdminController.makeOffering(excel_file, db)
+            return  AdminController.makeAllocation(excel_file, db)
+
+        print("Unsupported file format")
+        return {"error": "Unsupported file format. Please upload an Excel file with .xlsx extension."}
             
-            print(f'Total {len(courseOffering)} has been added. ')
-            return [
-                {
-                    'offeringId': course.ID,
-                    'CourseId' : course.CourseID,
-                    'Semester': course.Semester,
-                    "Department":  course.DEPARTMENT,
-                    "Year": course.Year,
-                    "Session": course.SESSION
-                }
-                for course in courseOffering
-            ]
+            
     @staticmethod
-    
-    def makeOffering(excelFile: BytesIO, db:Session):
+    def makeAllocation(excelFile: BytesIO, db:Session):
         
         df = pd.read_excel(excelFile)
+        print(df)
         rows, columns = df.shape
         
         fileContent = []
@@ -100,7 +94,12 @@ class AdminController:
         session = 'spring' if 1 <= month <=8 else "fall"
         
         # coursesAlreadyInOffering = AdminController.getAllCourseOfferingID(db, AdminController.getCurrentYear(), session)
-            
+        
+        if rows == 0:
+            print("excel is empty")
+            return {'error': 'Excel file is empty'}
+        
+        
         for i in range(rows):
             
             row = df.iloc[i]
@@ -108,102 +107,138 @@ class AdminController:
             if not row.isnull().all():
                 fileContent.append(df.iloc[i].to_dict())
         
-        for i in fileContent:
-            
-            courseCode = i.get('Course Code')
-            
-            courseId = db.query(Course.ID).filter(Course.COURSE_CODE == courseCode).scalar()
-            
-            if not courseId:
-                new_course = AdminController.addNewCourse(courseCode, i.get('Teacher Name'), db)
-                courseId = new_course.ID
-                
-            courseExists = db.query(CourseOffering).filter(CourseOffering.CourseID == courseId).first() # type: ignore
+        # AdminController.setCourseAllocationStaut(db)
         
-            #  Checking if course has already been added in the Coures Offering or not. If not then add in Course Offering. 
-            if not courseExists:
+        try:
+            for i in fileContent:
                 
-                new_off = CourseOffering()
-                new_off.Year = AdminController.getCurrentYear()
-                month = AdminController.getCurrentMonth()
+                courseCode = i.get('Course Code')
                 
-                if 1<= month <=8:
-                    new_off.SESSION = "Spring"
-                else:
-                    new_off.SESSION = "Fall"
-                    
+                courseId = db.query(Course.ID).filter(Course.COURSE_CODE == courseCode).scalar()
+               
                 section = i.get('Section')
-                    
                 part1, part2 = section.split('-')
-                if part1.startswith('BAI'):
-                    new_off.DEPARTMENT = 3  # type:ignore (1 for CS, 2 for SE, 3 for AI)
-                    
-                elif part1.startswith('BSCS'):
-                    new_off.DEPARTMENT = 1  # type: ignore (1 for CS, 2 for SE, 3 for AI)
-                    
-                elif part1.startswith('BSSE'):
-                    new_off.DEPARTMENT = 2  # type: ignore (1 for CS, 2 for SE, 3 for AI)
-                    
                 semester = part2[:-1]
-                new_off.Semester = semester
                 
-                section = part2[-1]
-                
-                sectionId = db.query(Section.ID).filter(
-                    Section.department == new_off.DEPARTMENT, 
-                    Section.name == section
-                ).first()[0] # type: ignore
-                
-                new_off.CourseID = courseId #type: ignore
-                
-                db.add(new_off)
-                db.commit()
-                db.refresh(new_off)
-                
-                offeringList.append(new_off)
-                offeringId = new_off.ID
-                
-            else:
-                print(f'Course {courseCode} already exists in course offering having Id: {courseExists.ID}')
-            
-            if offeringId == 0: #type: ignore
-                offeringId = courseExists.ID # type: ignore
-            
-            teacherName = i.get('Teacher Name')
-            teacherId = AdminController.fetchTeacherId(teacherName, db)
-              
-            if teacherId != 0:
-                print(f'Teacher ID: {teacherId}')
-                
-                if sectionId == 0:
-                    sectionId = AdminController.getSectionID(i.get('Section'), db)
-
-                new_all = CourseAllocation(
-                    TeacherID = teacherId,
-                    OfferingID = offeringId,
-                    SECTION = sectionId,
-                    AllocationDate = AdminController.getCurrentDate(),
-                    status = 'allocated'
-                )
-                
-                
-                allocationList.append(new_all)
+                if not courseId:
+                    new_course = AdminController.addNewCourse(courseCode, i.get('Teacher Name'), db)
+                    courseId = new_course.ID
                     
-            else:
-                print(f'No Teacher Id found against Teacher {teacherName}')
+                courseExists = db.query(CourseOffering).filter(
+                    CourseOffering.CourseID == courseId, 
+                    CourseOffering.Year == AdminController.getCurrentYear(),
+                    CourseOffering.SESSION == session,
+                    CourseOffering.Semester == semester
+                ).first() # type: ignore
             
-            offeringId = 0
-            sectionId = 0
-            
-        print(f'----------------------------------------------------')
-        print(f'----------------------------------------------------')
-        for all in allocationList:
-            print(f'offering Id: {all.OfferingID}, SectionId: {all.SECTION}, teacher ID: {all.TeacherID}')
-            
-        print(f'----------------------------------------------------')
-        print(f'----------------------------------------------------')
+                #  Checking if course has already been added in the Coures Offering or not. If not then add in Course Offering. 
+                if not courseExists:
+                    
+                    new_off = CourseOffering()
+                    new_off.Year = AdminController.getCurrentYear()
+                    month = AdminController.getCurrentMonth()
+                    
+                    if 1<= month <=8:
+                        new_off.SESSION = "Spring"
+                    else:
+                        new_off.SESSION = "Fall"
+                        
+                    if part1.startswith('BAI'):
+                        new_off.DEPARTMENT = 3  # type:ignore (1 for CS, 2 for SE, 3 for AI)
+                        
+                    elif part1.startswith('BSCS'):
+                        new_off.DEPARTMENT = 1  # type: ignore (1 for CS, 2 for SE, 3 for AI)
+                        
+                    elif part1.startswith('BSSE'):
+                        new_off.DEPARTMENT = 2  # type: ignore (1 for CS, 2 for SE, 3 for AI)
+                        
+                    # semester = part2[:-1]
+                    new_off.Semester = semester
+                    
+                    section = part2[-1]
+                    
+                    sectionId = db.query(Section.ID).filter(
+                        Section.department == new_off.DEPARTMENT, 
+                        Section.name == section
+                    ).first()[0] # type: ignore
+                    
+                    new_off.CourseID = courseId #type: ignore
+                    
+                    db.add(new_off)
+                    db.commit()
+                    db.refresh(new_off)
+                    
+                    offeringList.append(new_off)
+                    offeringId = new_off.ID
+                    
+                    # print(f'Course {courseCode} added in course offering with Id: {offeringId}')
+                    
+                # else:
+                #     print(f'Course {courseCode} already exists in course offering having Id: {courseExists.ID}')
+                
+                if offeringId == 0: #type: ignore
+                    offeringId = courseExists.ID # type: ignore
+                
+                
+                teacherName = i.get('Teacher Name')
+                teacherId = AdminController.fetchTeacherId(teacherName, db)
+                
+                if teacherId != 0:
+                    print(f'Teacher ID: {teacherId}')
+                    
+                    if sectionId == 0:
+                        sectionId = AdminController.getSectionID(i.get('Section'), db)
+
+                    courseAlreadyAllocated = db.query(CourseAllocation).filter(
+                        CourseAllocation.OfferingID == offeringId, 
+                        CourseAllocation.SECTION == sectionId,
+                        CourseAllocation.TeacherID == teacherId, 
+                        extract('year', CourseAllocation.AllocationDate) == AdminController.getCurrentYear(), 
+                    ).first() # type: ignore
+                    
+                    if not courseAlreadyAllocated:
+                         
+                        new_all = CourseAllocation(
+                            TeacherID = teacherId,
+                            OfferingID = offeringId,
+                            SECTION = sectionId,
+                            AllocationDate = AdminController.getCurrentDate(),
+                            status = 'allocated'
+                        )
+                        # Add in DB
+                        db.add(new_all)
+                        db.commit()
+                        db.refresh(new_all)
+                        
+                        allocationList.append(new_all)
+                            
+                        # print(f'Teacher {teacherName} allocated to course {courseCode} in section {i.get("Section")} with offering Id: {offeringId} ')
+                    # else:
+                    #     db.query(CourseAllocation).filter(CourseAllocation.ID == courseAlreadyAllocated.ID).update({CourseAllocation.status: 'allocated'})
+                    #     print(f'Teacher {teacherName} is already allocated to course {courseCode} in section {i.get("Section")} with offering Id: {offeringId}')
+                        
+                # else:
+                #     print(f'No Teacher Id found against Teacher {teacherName}')
+                
+                offeringId = 0
+                sectionId = 0
+                
+            print('new allocation added in the list.. ')
+                
+            print(f'----------------------------------------------------')
+            print(f'----------------------------------------------------')
+            for all in allocationList:
+                print(f'offering Id: {all.OfferingID}, SectionId: {all.SECTION}, teacher ID: {all.TeacherID}')
+                
+            print(f'----------------------------------------------------')
+            print(f'----------------------------------------------------')
         
-        return offeringList
+        except Exception as e:
+            db.rollback()
+            
+            return {"error": f"Database error: {str(e)}. Please upload file again."}
+        
+        return  { 'success' : f'Total {len(allocationList)} allocations have been made successfully.'}
         # return fileContent
     
     @staticmethod
@@ -264,3 +299,8 @@ class AdminController:
         return [
             i[0] for i in allcourses
         ]
+        
+    @staticmethod
+    def setCourseAllocationStaut(db: Session):
+        db.query(CourseAllocation).update({CourseAllocation.status: 'completed'})
+        return
