@@ -19,3 +19,8 @@ async def upload_course_offering(file: UploadFile = File(...), db: Session = Dep
 async def TeacherAllocation(file: UploadFile = File(...), db: Session = Depends(get_db)):
     return await AdminController.TeacherAllocation(file, db)
     
+@router.post('/uploadEnrollment')
+async def StudentEnrollment(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    return await AdminController.StudentEnrollment(file, db)
+    
+  
