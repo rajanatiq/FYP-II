@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 from fastapi import UploadFile 
-from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Course, Teacher, Users, Section)
+from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Course, Teacher, Users, Section, Student, Department)
 from io import BytesIO
 import pandas as pd
 from datetime import datetime
@@ -60,6 +60,17 @@ class AdminController:
 
         return {"message": "Data inserted successfully"}
 
+
+    @staticmethod
+    async def StudentEnrollment(file: UploadFile, db: Session):
+        content = await file.read()
+        
+        excel_file = BytesIO(content)
+
+        if file.filename.split(".")[-1] == "xlsx": #type: ignore
+            return AdminController.makeEnrollment(excel_file, db)
+        
+
     @staticmethod
     async def TeacherAllocation(file: UploadFile, db: Session):
         
@@ -75,6 +86,111 @@ class AdminController:
         return {"error": "Unsupported file format. Please upload an Excel file with .xlsx extension."}
             
             
+    
+    @staticmethod
+    def makeEnrollment(excelFile:BytesIO, db: Session):
+        
+        df = pd.read_excel(excelFile)
+        rows, columns = df.shape
+        
+        error_list = []
+        
+        filecontent = []
+        
+        if rows == 0:
+            return {'error': 'Excel file is empty'}
+        
+        for i in range(rows):
+            
+            row = df.iloc[i]
+            
+            if not row.isnull().all():
+                filecontent.append(df.iloc[i].to_dict())
+                
+        try:
+            for i in filecontent: 
+                course_code = i.get('Course Code')
+                enrollment_session = i.get('Session')
+                arid_no = i.get('Arid No')
+                year = i.get('Enrollment Year')
+                
+                courseId = db.query(Course.ID).filter(Course.COURSE_CODE == course_code).scalar()
+                
+                
+                std_departmentId = db.query(Department.ID).join(
+                    Section, Section.department == Department.ID    
+                ).join(
+                    Student, Student.Section == Section.ID
+                ).join(
+                    Users, Users.ID == Student.userID
+                ).filter(
+                    Users.identity_no == arid_no
+                ).scalar()
+                
+                std_semester = db.query(Student.semester).join(
+                    Users, Users.ID == Student.userID
+                ).filter(
+                    Users.identity_no == arid_no    
+                ).scalar()
+                
+                stdId = db.query(Student.StudentID).join(
+                    Users, Users.ID == Student.userID    
+                ).filter(
+                    Users.identity_no == arid_no
+                ).scalar()
+                
+                if std_departmentId and std_semester and stdId:
+                    # print(f'Student Id: {stdId}, Student dep ID: {std_departmentId}, Student Semester: {std_semester}, Course Id: {courseId}, year: {year}, session: {enrollment_session}')
+                    
+                    isCourseOffered = db.query(CourseOffering.ID).filter(
+                        CourseOffering.DEPARTMENT == std_departmentId, 
+                        CourseOffering.Semester == std_semester,
+                        CourseOffering.CourseID == courseId,
+                        CourseOffering.Year == year,
+                        CourseOffering.SESSION == enrollment_session 
+                    ).scalar()
+                    
+                    if isCourseOffered:
+                        
+                        offeringId = isCourseOffered
+                        
+                        isAlreadyEnrolled = db.query(CourseEnrollment.ID).filter(
+                            CourseEnrollment.OfferingID == offeringId
+                        ).scalar()
+                        
+                        if not isAlreadyEnrolled:
+                            new_enrl = CourseEnrollment(
+                                StudentID = stdId,
+                                OfferingID = isCourseOffered, 
+                                EnrollmentDate = AdminController.getCurrentDate()
+                            )
+                            
+                            db.add(new_enrl)
+                            db.commit()
+                            db.refresh(new_enrl)
+                            
+                            print(f'new enrollment added for course {course_code} against student {stdId} having enrollment id {new_enrl.ID}')
+                        else:
+                            error_list.append(f'Coures {course_code} already enrolled for studnet {stdId} with enrollment id {isAlreadyEnrolled}')
+                            print(f'Coures {course_code} already enrolled for studnet {stdId} with enrollment id {isAlreadyEnrolled}')
+                        
+                else:
+                    if not courseId:
+                        error_list.append(f'No course found having coures code {course_code}')
+                        
+                    if not std_departmentId:
+                        error_list.append(f'Student department or section mismatched')
+                     
+                    if not std_semester:
+                        error_list.append(f'Student semseter not found')
+                        
+                    if not stdId:
+                        error_list.append(f'No Student Id found for arid no {arid_no}')
+                        
+                    
+        except Exception as e:
+            return {"error": f"Database error: {str(e)}. Please upload file again."}
+               
     @staticmethod
     def makeAllocation(excelFile: BytesIO, db:Session):
         
@@ -107,7 +223,7 @@ class AdminController:
             if not row.isnull().all():
                 fileContent.append(df.iloc[i].to_dict())
         
-        # AdminController.setCourseAllocationStaut(db)
+        # AdminController.setCourseAllocationStauts(db)
         
         try:
             for i in fileContent:
@@ -120,19 +236,19 @@ class AdminController:
                 part1, part2 = section.split('-')
                 semester = part2[:-1]
                 
-                if not courseId:
-                    new_course = AdminController.addNewCourse(courseCode, i.get('Teacher Name'), db)
-                    courseId = new_course.ID
+                
+                department = 3 if part1.startswith('BAI') else 1 if part1.startswith('BSCS') else 2
                     
-                courseExists = db.query(CourseOffering).filter(
+                courseOffered = db.query(CourseOffering).filter(
                     CourseOffering.CourseID == courseId, 
                     CourseOffering.Year == AdminController.getCurrentYear(),
                     CourseOffering.SESSION == session,
-                    CourseOffering.Semester == semester
+                    CourseOffering.Semester == semester,
+                    CourseOffering.DEPARTMENT == department
                 ).first() # type: ignore
             
                 #  Checking if course has already been added in the Coures Offering or not. If not then add in Course Offering. 
-                if not courseExists:
+                if not courseOffered:
                     
                     new_off = CourseOffering()
                     new_off.Year = AdminController.getCurrentYear()
@@ -142,15 +258,16 @@ class AdminController:
                         new_off.SESSION = "Spring"
                     else:
                         new_off.SESSION = "Fall"
+                      
+                    new_off.DEPARTMENT = department # type: ignore  
+                    # if part1.startswith('BAI'):
+                    #     new_off.DEPARTMENT = 3  # type:ignore (1 for CS, 2 for SE, 3 for AI)
                         
-                    if part1.startswith('BAI'):
-                        new_off.DEPARTMENT = 3  # type:ignore (1 for CS, 2 for SE, 3 for AI)
+                    # elif part1.startswith('BSCS'):
+                    #     new_off.DEPARTMENT = 1  # type: ignore (1 for CS, 2 for SE, 3 for AI)
                         
-                    elif part1.startswith('BSCS'):
-                        new_off.DEPARTMENT = 1  # type: ignore (1 for CS, 2 for SE, 3 for AI)
-                        
-                    elif part1.startswith('BSSE'):
-                        new_off.DEPARTMENT = 2  # type: ignore (1 for CS, 2 for SE, 3 for AI)
+                    # elif part1.startswith('BSSE'):
+                    #     new_off.DEPARTMENT = 2  # type: ignore (1 for CS, 2 for SE, 3 for AI)
                         
                     # semester = part2[:-1]
                     new_off.Semester = semester
@@ -171,13 +288,13 @@ class AdminController:
                     offeringList.append(new_off)
                     offeringId = new_off.ID
                     
-                    # print(f'Course {courseCode} added in course offering with Id: {offeringId}')
+                    print(f'Course {courseCode} added in course offering with Id: {offeringId} for department {department}')
                     
-                # else:
-                #     print(f'Course {courseCode} already exists in course offering having Id: {courseExists.ID}')
+                else:
+                    print(f'Course {courseCode}, for department: {department} already exists in course offering having Id: {courseOffered.ID}')
                 
                 if offeringId == 0: #type: ignore
-                    offeringId = courseExists.ID # type: ignore
+                    offeringId = courseOffered.ID # type: ignore
                 
                 
                 teacherName = i.get('Teacher Name')
@@ -301,6 +418,14 @@ class AdminController:
         ]
         
     @staticmethod
-    def setCourseAllocationStaut(db: Session):
+    def setCourseAllocationStauts(db: Session):
         db.query(CourseAllocation).update({CourseAllocation.status: 'completed'})
+        return
+    
+    @staticmethod 
+    def setCourseEnrollmentStatus(db: Session):
+        db.query(CourseEnrollment).update({CourseEnrollment.Status: 'Completed'})
+        
+    @staticmethod
+    def updateStudentSemester(db: Session):
         return

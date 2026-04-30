@@ -11,7 +11,8 @@ class Student(Base):
     CGPA = Column(Float)
     Section = Column(Integer, ForeignKey('section.ID'))
     Intake = Column(String(20))
-    YEAR = Column(Integer)
+    YEAR = Column(Integer) 
+    semester = Column(Integer)
 
     # Previous Relationships
     user_rship = relationship('Users', back_populates='student_rship')
