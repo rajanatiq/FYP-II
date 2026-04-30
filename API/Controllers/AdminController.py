@@ -164,9 +164,9 @@ class AdminController:
                     
                     new_off.CourseID = courseId #type: ignore
                     
-                    db.add(new_off)
-                    db.commit()
-                    db.refresh(new_off)
+                    # db.add(new_off)
+                    # db.commit()
+                    # db.refresh(new_off)
                     
                     offeringList.append(new_off)
                     offeringId = new_off.ID
@@ -205,10 +205,10 @@ class AdminController:
                             AllocationDate = AdminController.getCurrentDate(),
                             status = 'allocated'
                         )
-                        # Add in DB
-                        db.add(new_all)
-                        db.commit()
-                        db.refresh(new_all)
+                        # # Add in DB
+                        # db.add(new_all)
+                        # db.commit()
+                        # db.refresh(new_all)
                         
                         allocationList.append(new_all)
                             

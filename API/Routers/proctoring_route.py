@@ -25,6 +25,10 @@ async def proctoring_event(file: UploadFile = File(...), EX_ID: int = Form(...),
 def get_student_violation_count(std_id: int, db: Session = Depends(get_db)):
     return ProctoringController.get_student_cheating_count(std_id, db)
 
-@router.post('/verifyVoice')
-async def verify_voice(file: UploadFile = File(...), identity_no: str = Form(...)):
-    return await ProctoringController.verifyVoice(file, identity_no)
+# @router.post('/verifyVoice')
+# async def verify_voice(file: UploadFile = File(...), identity_no: str = Form(...)):
+#     return await ProctoringController.verifyVoice(file, identity_no)
+
+@router.post('/voiceMonitoringDiarize')
+async def voiceProctoringDiarize(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...), question_id: int = Form(...), exam_type: str = Form(...), recorded_at: str = Form(...), db: Session = Depends(get_db)):
+    return await ProctoringController.VoiceProctoringDiarize(file, attempt_id, identity_no, question_id, exam_type, recorded_at, db)
