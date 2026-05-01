@@ -1,5 +1,6 @@
 # lib imports
 import io
+import re
 import numpy as np
 import cv2
 import librosa
@@ -46,6 +47,14 @@ try:
     print("[DIARIZATION] Speaker diarization pipeline loaded.")
 except Exception as _diar_e:
     print(f"[DIARIZATION] pyannote not available — diarization disabled: {_diar_e}")
+
+_nli_model = None
+try:
+    from sentence_transformers import CrossEncoder as _CrossEncoder
+    _nli_model = _CrossEncoder("cross-encoder/nli-deberta-v3-base")
+    print("[NLI] Transcript analysis model loaded.")
+except Exception as _nli_e:
+    print(f"[NLI] NLI model not available — content analysis disabled: {_nli_e}")
 
 counter = FaceCounter()
 predict = PoseEstimation()
@@ -411,6 +420,10 @@ class ProctoringController:
             labeled_transcript, score, is_match = ProctoringController._build_labeled_transcript(
                 full_path, diar_segments, identity_no
             )
+            # Extract only "Other" speaker text and run NLI on it
+            other_texts = re.findall(r'Other \([\d.]+s-[\d.]+s\): ([^|]+)', labeled_transcript)
+            other_combined = " ".join(t.strip() for t in other_texts)
+            is_content_suspicious, nli_score = ProctoringController._is_transcript_suspicious(other_combined)
             # Multiple speakers is always flagged as suspicious regardless of score
             err = _save_to_db(labeled_transcript)
             if err:
@@ -420,6 +433,8 @@ class ProctoringController:
                 'speakers': num_speakers,
                 'score': score,
                 'transcript': labeled_transcript,
+                'other_suspicious': is_content_suspicious,
+                'nli_score': nli_score,
             }
 
         except Exception as e:
@@ -435,6 +450,32 @@ class ProctoringController:
             (round(turn.start, 2), round(turn.end, 2), speaker)
             for turn, _, speaker in result.itertracks(yield_label=True)
         ]
+
+    _NLI_HYPOTHESES = [
+        "The speaker is telling someone to select a specific answer option.",
+        "The speaker is giving the correct answer to someone.",
+        "Someone is directing another person to choose a particular option.",
+        "The speaker is helping someone answer an exam question.",
+    ]
+
+    @staticmethod
+    def _is_transcript_suspicious(transcript: str):
+        if not transcript or len(transcript.strip()) < 5:
+            return False, 0.0
+        if _nli_model is None:
+            return False, 0.0
+        pairs = [(transcript, h) for h in ProctoringController._NLI_HYPOTHESES]
+        all_scores = _nli_model.predict(pairs)
+        max_entailment = 0.0
+        matches = 0
+        for s in all_scores:
+            probs = np.exp(s) / np.exp(s).sum()
+            entailment_prob = float(probs[1])
+            if entailment_prob > max_entailment:
+                max_entailment = entailment_prob
+            if entailment_prob > 0.5:
+                matches += 1
+        return matches >= 2, round(max_entailment, 4)
 
     @staticmethod
     def _build_labeled_transcript(audio_path: str, diar_segments: list, identity_no: str):

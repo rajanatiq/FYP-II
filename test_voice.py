@@ -40,11 +40,20 @@ from API.voice_verification import (
     MATCH_THRESHOLD,
 )
 
+import re
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, Form
 
 DIARIZATION_AVAILABLE = True
 print("[DIARIZATION] Using ECAPA-based speaker diarization (no pyannote needed).")
+
+_nli_model = None
+try:
+    from sentence_transformers import CrossEncoder as _CrossEncoder
+    _nli_model = _CrossEncoder("cross-encoder/nli-deberta-v3-base")
+    print("[NLI] Transcript analysis model loaded.")
+except Exception as _nli_e:
+    print(f"[NLI] NLI model not available: {_nli_e}")
 
 app = FastAPI(title="Voice Test Server")
 
@@ -295,6 +304,163 @@ async def test_voice_diarize(
             "is_match": False,
             "score": score,
             "transcript": labeled_transcript,
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# NLI helper
+# ---------------------------------------------------------------------------
+
+_NLI_HYPOTHESES = [
+    "The speaker is telling someone to select a specific answer option.",
+    "The speaker is giving the correct answer to someone.",
+    "Someone is directing another person to choose a particular option.",
+    "The speaker is helping someone answer an exam question.",
+]
+
+def _is_transcript_suspicious(transcript: str):
+    if not transcript or len(transcript.strip()) < 5:
+        return False, 0.0, "none"
+    if _nli_model is None:
+        return False, 0.0, "none"
+    pairs = [(transcript, h) for h in _NLI_HYPOTHESES]
+    all_scores = _nli_model.predict(pairs)
+    max_entailment = 0.0
+    matches = 0
+    for s in all_scores:
+        probs = np.exp(s) / np.exp(s).sum()
+        entailment_prob = float(probs[1])
+        if entailment_prob > max_entailment:
+            max_entailment = entailment_prob
+        if entailment_prob > 0.5:
+            matches += 1
+    return matches >= 2, round(max_entailment, 4), "nli"
+
+
+# ---------------------------------------------------------------------------
+# NLI text-only endpoint — quick test without audio
+# ---------------------------------------------------------------------------
+
+@app.post("/test-nli-text")
+async def test_nli_text(text: str = Form(...)):
+    """
+    Quick NLI test — just send raw text, get back suspicious/clean result.
+    Form-data: text (Text)
+    """
+    print(f"\n{'='*50}")
+    print(f"  [NLI-TEXT] Input: {text}")
+    print(f"{'='*50}")
+
+    is_suspicious, nli_score, method = _is_transcript_suspicious(text)
+    result = "SUSPICIOUS" if is_suspicious else "CLEAN"
+    print(f"[NLI] Result: {result}  |  Score: {nli_score}  |  Method: {method}")
+
+    return {
+        "text": text,
+        "is_suspicious": is_suspicious,
+        "nli_score": nli_score,
+        "detected_by": method,
+        "result": result,
+    }
+
+
+# ---------------------------------------------------------------------------
+# NLI audio endpoint — full pipeline: diarize → extract Other → NLI
+# ---------------------------------------------------------------------------
+
+@app.post("/test-nli")
+async def test_nli(
+    audio: UploadFile = File(...),
+    identity_no: str = Form(...),
+):
+    """
+    Full NLI pipeline test.
+    Diarizes audio → extracts Other speaker text → runs NLI on it.
+    Form-data: audio (File), identity_no (Text)
+    """
+    if _nli_model is None:
+        return {"error": "NLI model not loaded"}
+
+    audio_bytes = await audio.read()
+
+    print(f"\n{'='*50}")
+    print(f"  [NLI] Audio File  : {audio.filename}")
+    print(f"  [NLI] Identity No : {identity_no}")
+    print(f"{'='*50}")
+
+    suffix = os.path.splitext(audio.filename or "")[-1] or ".wav"
+    tmp_path = os.path.join(os.path.dirname(__file__), f"_temp_nli{suffix}")
+
+    with open(tmp_path, "wb") as f:
+        f.write(audio_bytes)
+
+    try:
+        # Step 1 — Diarize
+        print("\n[STEP 1] Running diarization...")
+        diar_segments, best_score = _diarize_by_identity(tmp_path, identity_no)
+        unique_labels = {s[2] for s in diar_segments}
+        has_other = "OTHER" in unique_labels
+        is_match = best_score >= MATCH_THRESHOLD
+        print(f"[DIARIZATION] Segments : {diar_segments}")
+        print(f"[DIARIZATION] Other speaker present: {has_other}")
+
+        # No OTHER detected — skip Whisper + NLI entirely
+        if not has_other:
+            print("\n[STEP 2] Only student detected — skipping transcription and NLI.")
+            return {
+                "speakers": 1,
+                "is_match": is_match,
+                "score": best_score,
+                "transcript": None,
+                "other_text": None,
+                "other_suspicious": False,
+                "nli_score": 0.0,
+            }
+
+        # Step 2 — OTHER detected — build labeled transcript
+        print("\n[STEP 2] Other speaker detected — building labeled transcript...")
+        labeled_transcript, score, is_match = _build_labeled_transcript(
+            tmp_path, diar_segments, identity_no, best_score
+        )
+        print(f'[TRANSCRIPT] "{labeled_transcript}"')
+
+        # Step 3 — Extract Other text and run NLI
+        other_texts = re.findall(r'Other \([\d.]+s-[\d.]+s\):([^|]+)', labeled_transcript)
+        other_combined = " ".join(t.strip() for t in other_texts)
+        print(f'[NLI] Other speaker text: "{other_combined}"')
+
+        if not other_combined:
+            print("[NLI] No Other speaker text found — skipping NLI")
+            return {
+                "speakers": len(unique_labels),
+                "is_match": is_match,
+                "score": score,
+                "transcript": labeled_transcript,
+                "other_text": None,
+                "other_suspicious": False,
+                "nli_score": 0.0,
+            }
+
+        is_suspicious, nli_score, method = _is_transcript_suspicious(other_combined)
+        result = "SUSPICIOUS" if is_suspicious else "CLEAN"
+        print(f"[NLI] Result: {result}  |  Score: {nli_score}  |  Method: {method}")
+
+        return {
+            "speakers": len(unique_labels),
+            "is_match": is_match,
+            "score": score,
+            "transcript": labeled_transcript,
+            "other_text": other_combined,
+            "other_suspicious": is_suspicious,
+            "nli_score": nli_score,
+            "detected_by": method,
         }
 
     except Exception as e:
