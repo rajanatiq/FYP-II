@@ -8,9 +8,6 @@ import librosa
 if "k2" not in sys.modules:
     sys.modules["k2"] = types.ModuleType("k2")
 
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["HF_HUB_OFFLINE"] = "1"
-
 from speechbrain.inference.speaker import SpeakerRecognition
 
 for _sb_missing in [

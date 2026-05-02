@@ -32,21 +32,7 @@ from API.voice_verification import (
     enrolled_embeddings, stt_model, MATCH_THRESHOLD,
 )
 
-# voice_verification sets HF_HUB_OFFLINE=1 — clear it so pyannote can load cached models
-os.environ.pop("HF_HUB_OFFLINE", None)
-DIARIZATION_AVAILABLE = False
-_diarization_pipeline = None
-try:
-    from pyannote.audio import Pipeline as _PyannotePipeline
-    _HF_TOKEN = os.environ.get("HF_TOKEN", "")
-    _diarization_pipeline = _PyannotePipeline.from_pretrained(
-        "pyannote/speaker-diarization-3.1",
-        use_auth_token=_HF_TOKEN if _HF_TOKEN else None,
-    )
-    DIARIZATION_AVAILABLE = True
-    print("[DIARIZATION] Speaker diarization pipeline loaded.")
-except Exception as _diar_e:
-    print(f"[DIARIZATION] pyannote not available — diarization disabled: {_diar_e}")
+print("[DIARIZATION] Using ECAPA-based speaker diarization (no pyannote needed).")
 
 _nli_model = None
 try:
@@ -277,11 +263,10 @@ class ProctoringController:
     #          Stored in DB (chunk_url): {attempt_id}/q{question_id}_{YYYYMMDDHHMMSS}.{ext}
     #          Example: 5/q3_20260430143022.wav
     #       ↓
-    #   3a. If pyannote NOT installed → verify_student_voice() (simple ECAPA check, no diarization)
-    #   3b. If pyannote IS installed  → _diarize_audio()  — detect how many speakers are in the audio
+    #   3. _diarize_by_identity() — ECAPA sliding-window: labels each window "STUDENT" or "OTHER"
     #       ↓
-    #   4a. Single speaker   → verify_student_voice()  — ECAPA embedding match against enrolled voice
-    #   4b. Multiple speakers → _build_labeled_transcript() — label each speaker as "Student"/"Other"
+    #   4a. Only STUDENT detected → verify_student_voice() — ECAPA match + no_speech check
+    #   4b. OTHER detected        → _build_labeled_transcript() — label each word "Student"/"Other"
     #       ↓
     #   5.  If voice mismatch (suspicious) → transcribe_audio() via Whisper → save record to DB
     #          MCQ exam  → StudentMCQExamAudioChunk  (stores path + transcript)
@@ -325,7 +310,6 @@ class ProctoringController:
             return {'error': 'no audio received'}
 
         # STEP 2: Convert incoming audio to WAV (16kHz mono) regardless of original format.
-        # This ensures pyannote, ECAPA, and Whisper all work consistently.
         # Handles: .wav, .ogg, .mp3, .mp4, .m4a, .flac, etc.
         # File is always saved as .wav — original format is not kept.
         wav_bytes = ProctoringController._to_wav_bytes(audio_bytes)
@@ -335,7 +319,7 @@ class ProctoringController:
         # relative_path (for DB): {attempt_id}/q{question_id}_{timestamp}.wav
         # Example              : 5/q3_20260430143022.wav
         relative_path = ProctoringController.saveAudioOnServer(wav_bytes, attempt_id, question_id, "wav")
-        # full_path is needed by Whisper/pyannote (they read from disk, not from bytes)
+        # full_path is needed by Whisper and ECAPA (they read from disk, not from bytes)
         full_path = os.path.join(audios_base_folder, relative_path)
         print(f'[DIARIZE] Audio saved: {relative_path}')
 
@@ -349,88 +333,67 @@ class ProctoringController:
         # MCQ  exam → StudentMCQExamAudioChunk  (chunk_url = relative_path, transcript = Whisper text)
         # DESC exam → StudentDESCExamAudioChunk (chunk_url = relative_path, no transcript column)
         # timestamp = frontend recorded_at (when AudioRecord.stop() was called on device)
-        def _save_to_db(transcript=None):
-            try:
-                if exam_type.lower() == 'mcq':
-                    record = StudentMCQExamAudioChunk(
-                        attemptID=attempt_id,
-                        question_id=question_id,
-                        chunk_url=relative_path,   # e.g. "5/q3_20260430143022.wav"
-                        transcript=transcript,
-                        timestamp=chunk_timestamp,
-                    )
-                else:
-                    record = StudentDESCExamAudioChunk(
-                        attemptID=attempt_id,
-                        question_id=question_id,
-                        chunk_url=relative_path,
-                        timestamp=chunk_timestamp,
-                    )
-                db.add(record)
-                db.commit()
-                return None  # None means no error
-            except Exception as e:
-                db.rollback()
-                return str(e)  # Returns error string if DB fails
+        # def _save_to_db(transcript=None):
+        #     try:
+        #         if exam_type.lower() == 'mcq':
+        #             record = StudentMCQExamAudioChunk(
+        #                 attemptID=attempt_id,
+        #                 question_id=question_id,
+        #                 chunk_url=relative_path,   # e.g. "5/q3_20260430143022.wav"
+        #                 transcript=transcript,
+        #                 timestamp=chunk_timestamp,
+        #             )
+        #         else:
+        #             record = StudentDESCExamAudioChunk(
+        #                 attemptID=attempt_id,
+        #                 question_id=question_id,
+        #                 chunk_url=relative_path,
+        #                 timestamp=chunk_timestamp,
+        #             )
+        #         db.add(record)
+        #         db.commit()
+        #         return None  # None means no error
+        #     except Exception as e:
+        #         db.rollback()
+        #         return str(e)  # Returns error string if DB fails
 
-        # STEP 4A: pyannote not installed → skip diarization, do simple ECAPA verification only
-        if not DIARIZATION_AVAILABLE:
-            verification = verify_student_voice(identity_no, wav_bytes)
-            if verification.get("no_speech"):
-                return {'status': 'silence'}
-            is_match = verification.get("is_match", False)
-            score = verification.get("score", 0)
-            if not is_match:
-                # Voice mismatch → transcribe with Whisper, save to DB, return suspicious
-                transcript = transcribe_audio(full_path)
-                err = _save_to_db(transcript)
-                if err:
-                    return {'error': f'database error: {err}'}
-                return {'status': 'suspicious', 'speakers': 1, 'score': score, 'transcript': transcript, 'diarization': False}
-            return {'status': 'match', 'speakers': 1, 'score': score, 'diarization': False}
-
-        # STEP 4B: pyannote IS available → diarize first to count speakers in the saved audio file
+        # STEP 4: ECAPA sliding-window diarization — classifies each window as STUDENT or OTHER
         try:
-            diar_segments = ProctoringController._diarize_audio(full_path)
-            # diar_segments = [(start_sec, end_sec, "SPEAKER_00"), ...]
-            unique_speakers = {s[2] for s in diar_segments}
-            num_speakers = len(unique_speakers)
-            print(f'[DIARIZE] attempt={attempt_id}, speakers_detected={num_speakers}')
+            diar_segments, best_score = ProctoringController._diarize_by_identity(full_path, identity_no)
+            unique_labels = {s[2] for s in diar_segments}
+            has_other = "OTHER" in unique_labels
+            is_match = best_score >= MATCH_THRESHOLD
+            print(f'[DIARIZE] attempt={attempt_id}, other_speaker={has_other}, score={best_score}')
 
-            # STEP 5A: Only one speaker detected — do normal ECAPA verification
-            if num_speakers <= 1:
+            # STEP 5A: Only student detected — standard verify (handles no_speech + score)
+            if not has_other:
                 verification = verify_student_voice(identity_no, wav_bytes)
                 if verification.get("no_speech"):
                     return {'status': 'silence', 'speakers': 1}
                 is_match = verification.get("is_match", False)
                 score = verification.get("score", 0)
                 if not is_match:
-                    # Single speaker but voice doesn't match enrolled student → suspicious
                     transcript = transcribe_audio(full_path)
-                    err = _save_to_db(transcript)
-                    if err:
-                        return {'error': f'database error: {err}'}
+                    # err = _save_to_db(transcript)
+                    # if err:
+                    #     return {'error': f'database error: {err}'}
                     return {'status': 'suspicious', 'speakers': 1, 'score': score, 'transcript': transcript}
                 return {'status': 'match', 'speakers': 1, 'score': score}
 
-            # STEP 5B: Multiple speakers → label each segment "Student" or "Other"
-            # _build_labeled_transcript() compares each speaker's ECAPA embedding to enrolled voice,
-            # assigns the best-matching speaker as "Student", rest as "Other".
-            # Returns labeled transcript like: "Student (0.0s-3.2s): Hello | Other (3.5s-5.1s): cheating"
+            # STEP 5B: OTHER speaker detected — labeled transcript + NLI
             labeled_transcript, score, is_match = ProctoringController._build_labeled_transcript(
-                full_path, diar_segments, identity_no
+                full_path, diar_segments, identity_no, best_score
             )
-            # Extract only "Other" speaker text and run NLI on it
-            other_texts = re.findall(r'Other \([\d.]+s-[\d.]+s\): ([^|]+)', labeled_transcript)
+            other_texts = re.findall(r'Other \([\d.]+s-[\d.]+s\):([^|]+)', labeled_transcript)
             other_combined = " ".join(t.strip() for t in other_texts)
             is_content_suspicious, nli_score = ProctoringController._is_transcript_suspicious(other_combined)
-            # Multiple speakers is always flagged as suspicious regardless of score
-            err = _save_to_db(labeled_transcript)
-            if err:
-                return {'error': f'database error: {err}'}
+            # err = _save_to_db(labeled_transcript)
+            # if err:
+            #     return {'error': f'database error: {err}'}
             return {
-                'status': 'match' if is_match else 'suspicious',
-                'speakers': num_speakers,
+                'status': 'suspicious',
+                'is_match': False,
+                'speakers': len(unique_labels),
                 'score': score,
                 'transcript': labeled_transcript,
                 'other_suspicious': is_content_suspicious,
@@ -441,23 +404,115 @@ class ProctoringController:
             return {'error': str(e)}
 
     @staticmethod
-    def _diarize_audio(audio_path: str) -> list:
-        # Runs pyannote speaker diarization on the saved audio file (reads from disk).
-        # Returns list of segments: [(start_sec, end_sec, speaker_label), ...]
-        # Example: [(0.0, 2.5, 'SPEAKER_00'), (2.8, 5.1, 'SPEAKER_01')]
-        result = _diarization_pipeline(audio_path)  # type: ignore
-        return [
-            (round(turn.start, 2), round(turn.end, 2), speaker)
-            for turn, _, speaker in result.itertracks(yield_label=True)
-        ]
+    def _diarize_by_identity(audio_path, identity_no,
+                             window_sec=3.0, stride_sec=1.5):
 
+        # voice_verification.py ki dictionary se is student ki enrolled embedding lo
+        enrolled = enrolled_embeddings.get(identity_no)
+
+        # audio file disk se load karo — 16kHz mono numpy array milega
+        # sr = sample rate (16000 matlab 1 second mein 16000 samples)
+        waveform, sr = librosa.load(audio_path, sr=16000, mono=True)
+
+        # poori audio ki length seconds mein nikalo
+        # jaise 48000 samples / 16000 = 3.0 seconds
+        total_sec = len(waveform) / sr
+
+        # window ka size samples mein convert karo
+        # 3.0 sec * 16000 = 48000 samples — ek baar mein itni audio analyze hogi
+        window = int(window_sec * sr)
+
+        # stride ka size samples mein convert karo
+        # 1.5 sec * 16000 = 24000 samples — har baar window itna aage khiskega
+        stride = int(stride_sec * sr)
+
+        # agar student ki koi enrolled voice nahi hai
+        # ya audio itni choti hai ke ek bhi window fit nahi hota
+        if enrolled is None or len(waveform) < window:
+            # poori audio ko STUDENT maano aur score 0 return karo
+            return [(0.0, round(total_sec, 2), "STUDENT")], 0.0
+
+        # har window ka result yahan store hoga — (start, end, label, score)
+        window_labels = []
+
+        # audio ke start se shuru karo
+        pos = 0
+
+        # jab tak window audio ke andar fit hota rahe
+        while pos + window <= len(waveform):
+
+            # audio ka yeh hissa nikalo (pos se pos+window tak)
+            chunk = waveform[pos: pos + window]
+
+            # is chunk ka ECAPA fingerprint (embedding) nikalo
+            emb = get_embedding_from_waveform(chunk)
+
+            # enrolled student ki embedding se compare karo — similarity score nikalo
+            sim = cosine_similarity(enrolled, emb)
+
+            # is window ka start time seconds mein
+            start = round(pos / sr, 2)
+
+            # is window ka end time seconds mein
+            end = round((pos + window) / sr, 2)
+
+            # agar similarity MATCH_THRESHOLD ka 85% ya zyada hai to STUDENT, warna OTHER
+            # 0.85 isliye use kiya — thoda lenient threshold, partial match bhi STUDENT maana jaye
+            if sim >= MATCH_THRESHOLD * 0.85:
+                label = "STUDENT"
+            else:
+                label = "OTHER"
+
+            # debugging ke liye print karo — kaunsa window, kitna score, kya label mila
+            print(f"[DIAR-DEBUG] {start}s-{end}s  sim={sim:.4f}  → {label}")
+
+            # is window ka result list mein save karo
+            window_labels.append((start, end, label, sim))
+
+            # window ko stride jitna aage khisao — next chunk pe jao
+            pos += stride
+
+        # sab windows mein se sabse zyada similarity score nikalo
+        # w[3] matlab tuple ka 4th element jo similarity score hai
+        best_score = max(w[3] for w in window_labels)
+
+        # ab consecutive windows ko merge karo — same label wale windows ek segment ban jayenge
+        segments = []
+
+        # pehle window se shuru karo
+        seg_start = window_labels[0][0]  # pehle window ka start time
+        cur_label = window_labels[0][2]  # pehle window ka label (STUDENT ya OTHER)
+
+        # index 1 se shuru karo kyunke index 0 upar handle kar liya
+        for i in range(1, len(window_labels)):
+
+            # agar is window ka label pichle window se alag hai — matlab speaker badal gaya
+            if window_labels[i][2] != cur_label:
+                # boundary = pichle window ke end aur is window ke start ka darmiyaan wala point
+                boundary = round((window_labels[i - 1][1] + window_labels[i][0]) / 2, 2)
+
+                # pichla segment complete hua — list mein save karo
+                segments.append((seg_start, boundary, cur_label))
+
+                # naya segment yahan se shuru hoga
+                seg_start = boundary
+                cur_label = window_labels[i][2]
+
+        # loop khatam hone ke baad last segment bhi save karo — audio ke end tak
+        segments.append((seg_start, round(total_sec, 2), cur_label))
+
+        # segments list aur best score return karo
+        return segments, round(best_score, 4)
+
+    # NLI model ko ye 4 sentences diye jaate hain check karne ke liye
+    # ke "Other" speaker ka transcript cheating suggest karta hai ya nahi
     _NLI_HYPOTHESES = [
         "The speaker is telling someone to select a specific answer option.",
-        "The speaker is giving the correct answer to someone.",
-        "Someone is directing another person to choose a particular option.",
-        "The speaker is helping someone answer an exam question.",
+        # kisi ko specific option chunne bol raha hai
+        "The speaker is giving the correct answer to someone.",  # kisi ko sahi jawab bata raha hai
+        "Someone is directing another person to choose a particular option.",  # kisi ko option select karwa raha hai
+        "The speaker is helping someone answer an exam question.",  # exam question mein help kar raha hai
     ]
-
     @staticmethod
     def _is_transcript_suspicious(transcript: str):
         if not transcript or len(transcript.strip()) < 5:
@@ -478,57 +533,54 @@ class ProctoringController:
         return matches >= 2, round(max_entailment, 4)
 
     @staticmethod
-    def _build_labeled_transcript(audio_path: str, diar_segments: list, identity_no: str):
-        # For each unique speaker, build one ECAPA embedding by concatenating their audio segments.
-        # Compare every speaker's embedding against the enrolled student's embedding via cosine similarity.
-        # The speaker with the highest score becomes "Student"; all others become "Other".
-        # Then run Whisper on the full audio and map each Whisper segment → nearest diarization label.
+    def _build_labeled_transcript(audio_path: str, diar_segments: list,
+                                   identity_no: str, best_score: float = 0.0):
+        # diar_segments already carry "STUDENT"/"OTHER" labels from _diarize_by_identity.
+        # Runs Whisper with word timestamps and maps each word to its speaker label.
         # Returns: (labeled_transcript_string, best_score, is_match)
-        import librosa as _librosa
-        waveform, sr = _librosa.load(audio_path, sr=16000, mono=True)
-        unique_speakers = list({s[2] for s in diar_segments})
-
-        # Build one embedding per unique speaker from their combined audio chunks
-        speaker_embeddings = {}
-        for spk in unique_speakers:
-            chunks = [
-                waveform[int(s * sr): int(e * sr)]
-                for s, e, lbl in diar_segments if lbl == spk
-            ]
-            combined = np.concatenate(chunks)
-            if len(combined) >= 8000:  # skip clips shorter than 0.5 sec (too short for ECAPA)
-                speaker_embeddings[spk] = get_embedding_from_waveform(combined)
-
-        # Find which speaker best matches the enrolled student's voice
-        enrolled = enrolled_embeddings.get(identity_no)
-        student_speaker = None
-        best_score = 0.0
-        if enrolled is not None:
-            for spk, emb in speaker_embeddings.items():
-                sc = cosine_similarity(enrolled, emb)
-                if sc > best_score:
-                    best_score = sc
-                    student_speaker = spk
-
+        waveform, sr = librosa.load(audio_path, sr=16000, mono=True)
         is_match = best_score >= MATCH_THRESHOLD
 
-        # Transcribe with Whisper and label each segment using the diarization speaker map
-        whisper_result = stt_model.transcribe(waveform, verbose=False)
+        whisper_result = stt_model.transcribe(waveform, verbose=False, language="en", word_timestamps=True)
         whisper_segments = whisper_result.get("segments", [])
 
-        def speaker_at(t: float) -> str:
-            # Returns the pyannote speaker label active at time t
-            for s, e, spk in diar_segments:
+        def label_for_time(t: float) -> str:
+            for s, e, lbl in diar_segments:
                 if s <= t <= e:
-                    return spk
-            return "__unknown__"
+                    return lbl
+            return "OTHER"
+
+        all_words = []
+        for seg in whisper_segments:
+            for w in seg.get("words", []):
+                all_words.append({
+                    "word": w["word"],
+                    "start": w["start"],
+                    "end": w["end"],
+                    "label": label_for_time((w["start"] + w["end"]) / 2),
+                })
 
         parts = []
-        for ws in whisper_segments:
-            mid = (ws["start"] + ws["end"]) / 2
-            spk = speaker_at(mid)
-            label = "Student" if spk == student_speaker else ("Other" if spk != "__unknown__" else "Unknown")
-            parts.append(f"{label} ({ws['start']:.1f}s-{ws['end']:.1f}s): {ws['text'].strip()}")
+        if all_words:
+            cur_label = all_words[0]["label"]
+            cur_start = all_words[0]["start"]
+            cur_words = [all_words[0]["word"]]
+            cur_end = all_words[0]["end"]
+
+            for w in all_words[1:]:
+                if w["label"] == cur_label:
+                    cur_words.append(w["word"])
+                    cur_end = w["end"]
+                else:
+                    display = "Student" if cur_label == "STUDENT" else "Other"
+                    parts.append(f"{display} ({cur_start:.1f}s-{cur_end:.1f}s):{' '.join(cur_words)}")
+                    cur_label = w["label"]
+                    cur_start = w["start"]
+                    cur_words = [w["word"]]
+                    cur_end = w["end"]
+
+            display = "Student" if cur_label == "STUDENT" else "Other"
+            parts.append(f"{display} ({cur_start:.1f}s-{cur_end:.1f}s):{' '.join(cur_words)}")
 
         return " | ".join(parts), round(best_score, 4), is_match
 
@@ -580,7 +632,7 @@ class ProctoringController:
     def _to_wav_bytes(audio_bytes: bytes) -> bytes:
         # Convert any audio format (ogg, mp4, mp3, wav, etc.) to WAV (16kHz, mono).
         # Uses librosa to decode and soundfile to re-encode — no extra dependencies needed.
-        # This ensures pyannote, ECAPA, and Whisper all receive a consistent WAV format.
+        # This ensures ECAPA and Whisper both receive a consistent WAV format.
         waveform, _ = librosa.load(io.BytesIO(audio_bytes), sr=16000, mono=True)
         buf = io.BytesIO()
         sf.write(buf, waveform, 16000, format='WAV', subtype='PCM_16')
