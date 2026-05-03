@@ -48,14 +48,15 @@ class PoseEstimationClass:
         with mp_face_mesh.FaceMesh(
             static_image_mode=True,
             max_num_faces=1,
-            refine_landmarks=True
+            refine_landmarks=True, 
+            min_detection_confidence = 0.3 
         ) as face_mesh:
 
             rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             results = face_mesh.process(rgb)
 
             if not results.multi_face_landmarks:
-                return image, None
+                return 'prediction error'
 
             lm = results.multi_face_landmarks[0].landmark
 
@@ -79,7 +80,8 @@ class PoseEstimationClass:
             # ---------- FACE WIDTH ----------
             face_width = abs(right_cheek[0] - left_cheek[0])
             if face_width == 0:
-                return image, None
+                print(f'face width is 0')
+                return 'prediction error'
 
             # ---------- PIVOT ----------
             pivot_x = (left_cheek[0] + right_cheek[0]) // 2

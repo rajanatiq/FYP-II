@@ -1,3 +1,4 @@
+import cv2
 from sqlalchemy.orm import Session
 from Models import (Users, Student, Teacher)
 from fastapi import UploadFile, File
@@ -52,7 +53,7 @@ class UserController:
         #     return {"error": f"Database error: {str(e)}"}, 500
 
     @staticmethod
-    def verifyPerson(id: str):
+    def verifyPerson(id: str, image_array: np.ndarray ):
         from pathlib import Path
         DIR = Path(__file__).resolve().parent.parent.parent
         TEMP_IMAGE = "temp.jpg"
@@ -61,7 +62,7 @@ class UserController:
        
         try:
             result = DeepFace.represent(
-                        img_path=TEMP_IMAGE,
+                        img_path=image_array,
                         model_name="Facenet",
                         enforce_detection=True
                     )
@@ -179,4 +180,8 @@ class UserController:
             return {"status": "error", "detail": f"Database error: {str(e)}"}
         # Save uploaded image
     
-    
+    @staticmethod
+    def bytes_to_numpy(image_bytes: bytes) -> np.ndarray:
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        return image # type: ignore

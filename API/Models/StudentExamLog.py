@@ -33,6 +33,7 @@ class StudentExamLog(Base):
     # )   
 
     image_path: Mapped[str] = mapped_column(String(100))
+    eye_gaze: Mapped[str] = mapped_column(String(10))
     
     examAttempt_rship = relationship("ExamAttempt", back_populates="log_rship")
 

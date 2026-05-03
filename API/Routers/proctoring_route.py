@@ -10,11 +10,11 @@ router = APIRouter()
 
 @router.post('/FaceMonitoring')
 async def FaceMonitoring(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...) ,db: Session=Depends(get_db)):
-    return await ProctoringController.FaceProctoring(file, attempt_id, identity_no, db)
+    return await ProctoringController.FaceProctoringParallel(file, attempt_id, identity_no, db)
 
-@router.post('/voiceMonitoring')
-async def voiceProctoring(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...), question_id: int = Form(...), exam_type: str = Form(...), db: Session=Depends(get_db)):
-    return await ProctoringController.VoiceProctoring(file, attempt_id, identity_no, question_id, exam_type, db)
+# @router.post('/voiceMonitoring')
+# async def voiceProctoring(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...), question_id: int = Form(...), exam_type: str = Form(...), db: Session=Depends(get_db)):
+#     return await ProctoringController.VoiceProctoring(file, attempt_id, identity_no, question_id, exam_type, db)
 
 @router.post('/AddProctoringEvent')
 async def proctoring_event(file: UploadFile = File(...), EX_ID: int = Form(...),
@@ -32,3 +32,11 @@ def get_student_violation_count(std_id: int, db: Session = Depends(get_db)):
 @router.post('/voiceMonitoringDiarize')
 async def voiceProctoringDiarize(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...), question_id: int = Form(...), exam_type: str = Form(...), start_time: str = Form(...), end_time: str = Form(...), db: Session = Depends(get_db)):
     return await ProctoringController.VoiceProctoringDiarize(file, attempt_id, identity_no, question_id, exam_type, start_time, end_time, db)
+
+
+@router.post('/detecObjects')
+async def ObjectDetection(file: UploadFile = File(...), attempt_id: int = Form(...), db: Session = Depends(get_db)):
+    return await ProctoringController.detect_objects(file, attempt_id)
+
+
+# uvicorn main:app --reload --host 0.0.0.0 --port 8000 

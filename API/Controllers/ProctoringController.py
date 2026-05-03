@@ -14,8 +14,17 @@ from pathlib import Path
 from deepface import DeepFace
 from retinaface import RetinaFace
 from Controllers.UserController import UserController
+from datetime import datetime
+import asyncio
+import mediapipe as mp
+from ultralytics import YOLO #type: ignore
+
 
 root_dir = Path(__file__).resolve().parent.parent  # Points to API Folder
+
+yolo_model_path = str(root_dir.parent / "ML/ObjectDetection/yolov8n.pt")
+
+object_detection_model = YOLO(yolo_model_path)
 
 # import Models
 from Models import (ProctoringEvent, CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
@@ -54,26 +63,42 @@ pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring')  # Point
 audios_base_folder = str(root_dir / 'Assets/Audio/VoiceMonitoring')  # Points to Voice Monitoring folder
 
 
+mp_face_mesh = mp.solutions.face_mesh # type: ignore
+
+face_mesh = mp_face_mesh.FaceMesh(
+    static_image_mode=True,
+    max_num_faces=1,
+    refine_landmarks=True,
+    min_detection_confidence=0.5
+)
+cheating_objects = ["cell phone", "book", "laptop", "tv", "remote"]
+
 class ProctoringController:
 
     # ═══════════════════════════ IMAGE / CAMERA ═══════════════════════════
 
     @staticmethod
+    def bytes_to_numpy(image_bytes: bytes) -> np.ndarray:
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        return image # type: ignore
+    
+    @staticmethod
     async def FaceProctoring(file: UploadFile, attempt_id: int, identity_no: str, db: Session):
         '''This method checks the face proctoring, saving the image on the server and add's the entry in the database in the student exam log table. '''
 
+        
         print(f'attempt id: {attempt_id}')
         examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
         if examAttempt:
-            content = await file.read()
-
-            np_array = np.frombuffer(content, np.uint8)
-            image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+            
+            image_bytes = await file.read()
+            image_array = ProctoringController.bytes_to_numpy(image_bytes)
 
             # face_count = ProctoringController.count_face_deep_face(content=content)
             # face_count = counter.faceCount(image=image)
 
-            face_count = ProctoringController.count_face(image)
+            face_count = ProctoringController.count_face(image_array)
 
             new_record = StudentExamLog()
             new_record.attempt_id = attempt_id
@@ -95,13 +120,17 @@ class ProctoringController:
                     # return {"pose": "No face detected"}
 
                 else:
-                    identity_verified = UserController.verifyPerson(identity_no)
+                    identity_verified = UserController.verifyPerson(identity_no, image_array)
+                    
                     print(f"identity = {identity_verified}")
-
+                    
                     if identity_verified == True:
-                        pose = PoseEstimationClass.process_face_pose(image)
-                        new_record.position = str(pose)
-                        new_record.isPresent = True
+                        pose = str(PoseEstimationClass.process_face_pose(image_array))
+                        
+                        new_record.eye_gaze = ProctoringController.EyeGazeMovement(image_array)
+                            
+                        new_record.position = pose
+                        new_record.isPresent = True 
                         position = pose
 
                     elif identity_verified == False:
@@ -110,7 +139,7 @@ class ProctoringController:
                         position = "Identity Mismatched. Unauthorized Person Detected!"
                     # return {"pose": pose}
 
-                serverImagePath = ProctoringController.saveImageOnServer(content, attempt_id)
+                serverImagePath = ProctoringController.saveImageOnServer(image_bytes, attempt_id)
                 new_record.TIMESTAMP = datetime.now()
                 new_record.image_path = serverImagePath
                 # print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
@@ -397,7 +426,8 @@ class ProctoringController:
             
             try:
                 if exam_type.lower() == 'mcq':
-                    record = StudentMCQExamAudioChunk(
+                    
+                    new_record = StudentMCQExamAudioChunk(
                         attemptID = attempt_id,
                         question_id = question_id,
                         chunk_url = relative_path,
@@ -405,15 +435,34 @@ class ProctoringController:
                         student_present = 1 if is_match else 0,
                         other_person = 1 if (len(unique_labels) > 1) else 0,
                         other_suspicous = 1 if is_content_suspicious else 0,
-                        start_time = start_time,
-                        end_time = end_time
+                        start_time = datetime.fromisoformat(start_time),
+                        end_time = datetime.fromisoformat(end_time)
                     )
                     
-                    for column in record.__table__.columns:
-                        print(column.name, getattr(record, column.name))
+                    db.add(new_record)
+                    db.commit()
+                    db.refresh(new_record)
+                
+                elif exam_type.lower() == 'desc':
+                    new_record = StudentDESCExamAudioChunk(
+                        attemptID = attempt_id,
+                        question_id = question_id,
+                        chunk_url = relative_path,
+                        transcript = labeled_transcript,
+                        student_present = 1 if is_match else 0,
+                        other_person = 1 if (len(unique_labels) > 1) else 0,
+                        other_suspicous = 1 if is_content_suspicious else 0,
+                        start_time = datetime.fromisoformat(start_time),
+                        end_time = datetime.fromisoformat(end_time)
+                    )
+                    
+                    db.add(new_record)
+                    db.commit()
+                    db.refresh(new_record)
                     
             except Exception as e:
-                print(f'ERROR: {e}')
+                print(f"ERROR: {e}")
+                db.rollback()
             
             return {
                 'status': 'suspicious',
@@ -576,7 +625,7 @@ class ProctoringController:
 
         all_words = []
         for seg in whisper_segments:
-            for w in seg.get("words", []):
+            for w in seg.get("words", []): #type: ignore
                 all_words.append({
                     "word": w["word"],
                     "start": w["start"],
@@ -764,3 +813,155 @@ class ProctoringController:
     #     print(pose)
 
     #     return {"face pose": pose}
+
+    @staticmethod
+    def pt(lm, i, w, h):
+        return np.array([int(lm[i].x * w), int(lm[i].y * h)])
+
+    @staticmethod
+    def EyeGazeMovement(image):
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        res = face_mesh.process(rgb)
+
+        if not res.multi_face_landmarks:
+            return "NO FACE"
+
+        h, w, _ = image.shape
+        lm = res.multi_face_landmarks[0].landmark
+
+        left = ProctoringController.pt(lm, 33, w, h)
+        right = ProctoringController.pt(lm, 133, w, h)
+        top = ProctoringController.pt(lm, 159, w, h)
+        bottom = ProctoringController.pt(lm, 145, w, h)
+        iris = ProctoringController.pt(lm, 468, w, h)
+
+        x = (iris[0] - left[0]) / (right[0] - left[0] + 1)
+        y = (iris[1] - top[1]) / (bottom[1] - top[1] + 1)
+
+        if x < 0.38:
+            return "LEFT"
+        elif x > 0.62:
+            return "RIGHT"
+        elif y < 0.38:
+            return "UP"
+        elif y > 0.62:
+            return "DOWN"
+        return "CENTER"
+    
+    @staticmethod
+    async def FaceProctoringParallel(file: UploadFile, attempt_id: int, identity_no: str, db: Session):
+        '''This method checks the face proctoring, saving the image on the server and add's the entry in the database in the student exam log table. '''
+
+        try:
+            examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
+
+            if examAttempt:
+                
+                image_bytes = await file.read()
+                
+                if not image_bytes:
+
+                    new_record = StudentExamLog(
+                        attempt_id = attempt_id,
+                        TIMESTAMP = datetime.now(),
+                        position = 'unknow',
+                        isPresent = 0,
+                        image_path = None, 
+                        eye_gaze = None
+                    )
+                    db.add(new_record)
+                    db.commit()
+                    return {'error': 'no image found'}
+                    
+                image_array = ProctoringController.bytes_to_numpy(image_bytes)
+
+                face_count = ProctoringController.count_face(image_array)
+
+                serverImagePath = ProctoringController.saveImageOnServer(image_bytes, attempt_id)
+                new_record = StudentExamLog()
+                new_record.attempt_id = attempt_id
+                new_record.TIMESTAMP = datetime.now()
+
+                position = "unknown"
+                
+                try:
+                    
+                    if face_count > 1:
+                        new_record.isPresent = True
+                        new_record.position = "multiple face detected"
+                        position = "Multiple faces detected"
+                    
+                    elif face_count == 0:
+                        new_record.isPresent = False
+                        new_record.position = "none"
+                        position = "no face detected"
+                        
+                    else:
+                        identity_verified, pose, eye_gaze = await asyncio.gather(
+                            asyncio.to_thread( UserController.verifyPerson, identity_no, image_array),
+                            asyncio.to_thread( PoseEstimationClass.process_face_pose, image_array), 
+                            asyncio.to_thread( ProctoringController.EyeGazeMovement, image_array)
+                        )
+                        new_record.eye_gaze = eye_gaze
+                        
+                        if identity_verified == True:
+                            new_record.position = str(pose)
+                            new_record.isPresent = True 
+                            position = pose
+
+                        elif identity_verified == False:
+                            new_record.position = "identity mismatched"
+                            new_record.isPresent = False
+                            position = "Identity Mismatched. Unauthorized Person Detected!"
+                        
+                    
+                    new_record.TIMESTAMP = datetime.now()
+                    new_record.image_path = serverImagePath
+                    # print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
+                    db.add(new_record)
+                    db.commit()
+
+                    return {'pose': position}
+                
+                except Exception as e:
+                    db.rollback()
+                    print(f'ERROR: {e}')
+                    return {'fail': f"data base error {e}"}
+
+            else:
+                return {'fail': 'no student record found. '}
+            
+        except Exception as e:
+            db.rollback()
+            return {'fail': 'ERROR'}
+        
+        
+    @staticmethod
+    async def detect_objects(file: UploadFile, attempt_id: int):
+
+        contents = await file.read()
+        
+        image_array = ProctoringController.bytes_to_numpy(contents)
+
+        results = object_detection_model(image_array)
+
+        detected_flag = False
+        detected_objects = []
+
+        for r in results:
+            for box in r.boxes:
+                cls_id = int(box.cls[0])
+                label = object_detection_model.names[cls_id]
+
+                if label in cheating_objects:
+                    detected_flag = True
+
+                    if label not in detected_objects:
+                        detected_objects.append(label)
+
+        return {
+            "cheating_detected": detected_flag,
+            "detected_objects": detected_objects
+        }
+    
+    
