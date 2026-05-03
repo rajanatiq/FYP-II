@@ -417,7 +417,7 @@ class ProctoringController:
             
             return {
                 'status': 'suspicious',
-                'is_match': False,
+                'is_match': is_match,
                 'speakers': len(unique_labels),
                 'score': score,
                 'transcript': labeled_transcript,

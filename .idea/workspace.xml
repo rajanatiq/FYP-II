@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="hsdg">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/voice_verification.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/voice_verification.py" afterDir="false" />
     </list>

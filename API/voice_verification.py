@@ -17,7 +17,16 @@ if "k2" not in sys.modules:
 # SpeechBrain ke kuch andar ke modules exist nahi karte install mein
 # lekin SpeechBrain unhe dhundta hai — agar nahi mile to crash ho jata hai
 # isliye inhe bhi fake/dummy se replace kar dete hain taake crash na ho
-
+missing_modules = [
+    "speechbrain.integrations.huggingface",
+    "speechbrain.integrations.huggingface.wordemb",
+    "speechbrain.integrations.nlp",
+]
+for module_name in missing_modules:
+    if module_name not in sys.modules:
+        fake_module = types.ModuleType(module_name)
+        fake_module.__path__ = []
+        sys.modules[module_name] = fake_module
 
 # SpeechBrain se ECAPA-TDNN speaker recognition model ka inference class import karo
 from speechbrain.inference.speaker import SpeakerRecognition
