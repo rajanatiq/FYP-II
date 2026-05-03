@@ -297,7 +297,7 @@ class ProctoringController:
     #                 e.g. "2026-04-30T14:30:25.123Z"  stored in DB as the chunk's timestamp
     # ─────────────────────────────────────────────────────────────────────
     @staticmethod
-    async def VoiceProctoringDiarize(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, recorded_at: str, db: Session):
+    async def VoiceProctoringDiarize(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, start_time: str, end_time: str, db: Session):
         '''
         Diarization-aware voice monitoring.
         Single speaker  → standard ECAPA verify, plain transcript on mismatch.
@@ -325,10 +325,11 @@ class ProctoringController:
 
         # STEP 3: Parse frontend timestamp. Fallback to server time if invalid/missing.
         try:
-            chunk_timestamp = datetime.fromisoformat(recorded_at.replace("Z", "+00:00"))
+            chunk_timestamp = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
         except Exception:
             chunk_timestamp = datetime.now()
 
+            
         # STEP 4: Inner helper — saves a suspicious audio record to the DB.
         # MCQ  exam → StudentMCQExamAudioChunk  (chunk_url = relative_path, transcript = Whisper text)
         # DESC exam → StudentDESCExamAudioChunk (chunk_url = relative_path, no transcript column)
@@ -390,6 +391,27 @@ class ProctoringController:
             # err = _save_to_db(labeled_transcript)
             # if err:
             #     return {'error': f'database error: {err}'}
+            
+            try:
+                if exam_type.lower() == 'mcq':
+                    record = StudentMCQExamAudioChunk(
+                        attemptID = attempt_id,
+                        question_id = question_id,
+                        chunk_url = relative_path,
+                        transcript = labeled_transcript,
+                        student_present = 1 if is_match else 0,
+                        other_person = 1 if (len(unique_labels) > 1) else 0,
+                        other_suspicous = 1 if is_content_suspicious else 0,
+                        start_time = start_time,
+                        end_time = end_time
+                    )
+                    
+                    for column in record.__table__.columns:
+                        print(column.name, getattr(record, column.name))
+                    
+            except Exception as e:
+                print(f'ERROR: {e}')
+            
             return {
                 'status': 'suspicious',
                 'is_match': False,
@@ -520,7 +542,7 @@ class ProctoringController:
         if _nli_model is None:
             return False, 0.0
         pairs = [(transcript, h) for h in ProctoringController._NLI_HYPOTHESES]
-        all_scores = _nli_model.predict(pairs)
+        all_scores = _nli_model.predict(pairs) # type: ignore
         max_entailment = 0.0
         matches = 0
         for s in all_scores:
@@ -533,8 +555,7 @@ class ProctoringController:
         return matches >= 2, round(max_entailment, 4)
 
     @staticmethod
-    def _build_labeled_transcript(audio_path: str, diar_segments: list,
-                                   identity_no: str, best_score: float = 0.0):
+    def _build_labeled_transcript(audio_path: str, diar_segments: list, identity_no: str, best_score: float = 0.0):
         # diar_segments already carry "STUDENT"/"OTHER" labels from _diarize_by_identity.
         # Runs Whisper with word timestamps and maps each word to its speaker label.
         # Returns: (labeled_transcript_string, best_score, is_match)

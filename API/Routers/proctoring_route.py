@@ -30,5 +30,5 @@ def get_student_violation_count(std_id: int, db: Session = Depends(get_db)):
 #     return await ProctoringController.verifyVoice(file, identity_no)
 
 @router.post('/voiceMonitoringDiarize')
-async def voiceProctoringDiarize(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...), question_id: int = Form(...), exam_type: str = Form(...), recorded_at: str = Form(...), db: Session = Depends(get_db)):
-    return await ProctoringController.VoiceProctoringDiarize(file, attempt_id, identity_no, question_id, exam_type, recorded_at, db)
+async def voiceProctoringDiarize(file: UploadFile = File(...), attempt_id: int = Form(...), identity_no: str = Form(...), question_id: int = Form(...), exam_type: str = Form(...), start_time: str = Form(...), end_time: str = Form(...), db: Session = Depends(get_db)):
+    return await ProctoringController.VoiceProctoringDiarize(file, attempt_id, identity_no, question_id, exam_type, start_time, end_time, db)
