@@ -36,6 +36,9 @@ print("[DIARIZATION] Using ECAPA-based speaker diarization (no pyannote needed).
 
 _nli_model = None
 try:
+    # offline mode on karo taake sentence_transformers internet check na kare
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
     from sentence_transformers import CrossEncoder as _CrossEncoder
     _nli_model = _CrossEncoder("cross-encoder/nli-deberta-v3-base")
     print("[NLI] Transcript analysis model loaded.")

@@ -14,6 +14,11 @@ if "k2" not in sys.modules:
     # ek khali/fake k2 module bana do taake SpeechBrain import karte waqt error na aaye
     sys.modules["k2"] = types.ModuleType("k2")
 
+# SpeechBrain ke kuch andar ke modules exist nahi karte install mein
+# lekin SpeechBrain unhe dhundta hai — agar nahi mile to crash ho jata hai
+# isliye inhe bhi fake/dummy se replace kar dete hain taake crash na ho
+
+
 # SpeechBrain se ECAPA-TDNN speaker recognition model ka inference class import karo
 from speechbrain.inference.speaker import SpeakerRecognition
 
