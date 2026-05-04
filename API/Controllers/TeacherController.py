@@ -14,7 +14,9 @@ from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users
 
 
 image_base_url = 'http://192.168.100.57:8000/images/'
-audio_base_url = 'http://192.168.100.57:8000/combinedAudios'
+audio_base_url = 'http://192.168.100.57:8000/audios'
+
+
 
 pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring')
 audios_base_folder = str(root_dir / 'Assets/Audio/VoiceMonitoring')
@@ -312,9 +314,10 @@ class TeacherController:
                 audio_folder = str(record.ID)
                 
                 # checking if audios are already combined or not ?
-                for file in os.listdir(combined_audios_base_folder):
+                # for file in os.listdir(combined_audios_base_folder):
+                for file in os.listdir(audios_base_folder):
                     if file.endswith(f'{audio_folder}.m4a'):
-                        return {'fail': f'{os.path.join(combined_audios_base_folder, file)}'}
+                        return {'fail': f'{os.path.join(audios_base_folder, file)}'}
                         
                 output_path = TeacherController.combineChunksInOneAudioFile(audio_folder)
                     

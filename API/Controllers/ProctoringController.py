@@ -398,19 +398,31 @@ class ProctoringController:
             is_match = best_score >= MATCH_THRESHOLD
             print(f'[DIARIZE] attempt={attempt_id}, other_speaker={has_other}, score={best_score}')
 
+            print(f'has_other = {has_other}')
+            
             # STEP 5A: Only student detected — standard verify (handles no_speech + score)
             if not has_other:
                 verification = verify_student_voice(identity_no, wav_bytes)
                 if verification.get("no_speech"):
+                    ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, "", True, unique_labels, True, start_time , end_time)
+                    
                     return {'status': 'silence', 'speakers': 1}
                 is_match = verification.get("is_match", False)
                 score = verification.get("score", 0)
+                
+                transcript = transcribe_audio(full_path)
+                print(transcript)
                 if not is_match:
-                    transcript = transcribe_audio(full_path)
                     # err = _save_to_db(transcript)
                     # if err:
+                    
                     #     return {'error': f'database error: {err}'}
+                    print('single user but not matched')
+                    ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, transcript, is_match, True, True, start_time , end_time)
+                    
                     return {'status': 'suspicious', 'speakers': 1, 'score': score, 'transcript': transcript}
+                ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, transcript, is_match, False, False, start_time , end_time)
+                
                 return {'status': 'match', 'speakers': 1, 'score': score}
 
             # STEP 5B: OTHER speaker detected — labeled transcript + NLI
@@ -424,45 +436,9 @@ class ProctoringController:
             # if err:
             #     return {'error': f'database error: {err}'}
             
-            try:
-                if exam_type.lower() == 'mcq':
-                    
-                    new_record = StudentMCQExamAudioChunk(
-                        attemptID = attempt_id,
-                        question_id = question_id,
-                        chunk_url = relative_path,
-                        transcript = labeled_transcript,
-                        student_present = 1 if is_match else 0,
-                        other_person = 1 if (len(unique_labels) > 1) else 0,
-                        other_suspicous = 1 if is_content_suspicious else 0,
-                        start_time = datetime.fromisoformat(start_time),
-                        end_time = datetime.fromisoformat(end_time)
-                    )
-                    
-                    db.add(new_record)
-                    db.commit()
-                    db.refresh(new_record)
-                
-                elif exam_type.lower() == 'desc':
-                    new_record = StudentDESCExamAudioChunk(
-                        attemptID = attempt_id,
-                        question_id = question_id,
-                        chunk_url = relative_path,
-                        transcript = labeled_transcript,
-                        student_present = 1 if is_match else 0,
-                        other_person = 1 if (len(unique_labels) > 1) else 0,
-                        other_suspicous = 1 if is_content_suspicious else 0,
-                        start_time = datetime.fromisoformat(start_time),
-                        end_time = datetime.fromisoformat(end_time)
-                    )
-                    
-                    db.add(new_record)
-                    db.commit()
-                    db.refresh(new_record)
-                    
-            except Exception as e:
-                print(f"ERROR: {e}")
-                db.rollback()
+            ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, labeled_transcript, is_match, True if len(unique_labels) > 1 else False , is_content_suspicious, start_time , end_time)
+            
+            print('last matched')
             
             return {
                 'status': 'suspicious',
@@ -477,6 +453,48 @@ class ProctoringController:
         except Exception as e:
             return {'error': str(e)}
 
+    @staticmethod
+    def save_audio_to_db(db: Session, exam_type: str, attempt_id: int, question_id: int, relative_path: str, labeled_transcript: str, is_match: bool, other_person: bool, is_content_suspicious:bool, start_time: str, end_time: str):
+        try:
+            if exam_type.lower() == 'mcq':
+                
+                new_record = StudentMCQExamAudioChunk(
+                    attemptID = attempt_id,
+                    question_id = question_id,
+                    chunk_url = relative_path,
+                    transcript = labeled_transcript,
+                    student_present = 1 if is_match else 0,
+                    other_person = 1 if other_person else 0,
+                    other_suspicous = 1 if is_content_suspicious else 0,
+                    start_time = datetime.fromisoformat(start_time),
+                    end_time = datetime.fromisoformat(end_time)
+                )
+                
+                db.add(new_record)
+                db.commit()
+                db.refresh(new_record)
+            
+            elif exam_type.lower() == 'desc':
+                new_record = StudentDESCExamAudioChunk(
+                    attemptID = attempt_id,
+                    question_id = question_id,
+                    chunk_url = relative_path,
+                    transcript = labeled_transcript,
+                    student_present = 1 if is_match else 0,
+                    other_person = 1 if other_person else 0,
+                    other_suspicous = 1 if is_content_suspicious else 0,
+                    start_time = datetime.fromisoformat(start_time),
+                    end_time = datetime.fromisoformat(end_time)
+                )
+                
+                db.add(new_record)
+                db.commit()
+                db.refresh(new_record)
+                print('record added in db')
+
+        except Exception as e:
+            print(f"ERROR: {e}")
+            db.rollback()
     @staticmethod
     def _diarize_by_identity(audio_path, identity_no,
                              window_sec=3.0, stride_sec=1.5):
@@ -536,7 +554,7 @@ class ProctoringController:
                 label = "STUDENT"
             else:
                 label = "OTHER"
-
+            
             # debugging ke liye print karo — kaunsa window, kitna score, kya label mila
             print(f"[DIAR-DEBUG] {start}s-{end}s  sim={sim:.4f}  → {label}")
 

@@ -35,6 +35,8 @@ app = FastAPI(title="FYP Project API", lifespan=lifespan)
 
 app.mount("/images", StaticFiles(directory="Assets/Images/CameraMonitoring"), name="images")
 app.mount("/combinedAudios", StaticFiles(directory="Assets/Audio/CombinedAudios"), name="combinedAudios")
+app.mount("/audios", StaticFiles(directory="Assets/Audio/VoiceMonitoring"), name="audios")
+
 
 # allows the request from frontEnd or Postman
 origins = ["*"]
