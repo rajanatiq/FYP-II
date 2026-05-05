@@ -394,6 +394,11 @@ class ProctoringController:
         try:
             diar_segments, best_score = ProctoringController._diarize_by_identity(full_path, identity_no)
             unique_labels = {s[2] for s in diar_segments}
+            
+            print('printing unique labels................')
+            for i in unique_labels:
+                print(i)
+                
             has_other = "OTHER" in unique_labels
             is_match = best_score >= MATCH_THRESHOLD
             print(f'[DIARIZE] attempt={attempt_id}, other_speaker={has_other}, score={best_score}')
@@ -404,8 +409,15 @@ class ProctoringController:
             if not has_other:
                 verification = verify_student_voice(identity_no, wav_bytes)
                 if verification.get("no_speech"):
-                    ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, "", True, unique_labels, True, start_time , end_time)
                     
+                    # db, examtype, attemptid, questionid, path, transcript, student voice matched ?, other person present? , iscontentsuspicious, starttime, endtime
+                    
+                    ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, "", True, False, True, start_time , end_time)
+                    
+                    
+                    # ave_audio_to_db(db: Session, exam_type: str, attempt_id: int, question_id: int, relative_path: str, labeled_transcript: str, is_match: bool, other_person: bool, is_content_suspicious:bool, start_time: str, end_time: str):
+                        
+                        
                     return {'status': 'silence', 'speakers': 1}
                 is_match = verification.get("is_match", False)
                 score = verification.get("score", 0)
@@ -458,6 +470,9 @@ class ProctoringController:
         try:
             if exam_type.lower() == 'mcq':
                 
+                suspicious = True if is_content_suspicious else True if not is_match else False
+                
+                
                 new_record = StudentMCQExamAudioChunk(
                     attemptID = attempt_id,
                     question_id = question_id,
@@ -467,7 +482,8 @@ class ProctoringController:
                     other_person = 1 if other_person else 0,
                     other_suspicous = 1 if is_content_suspicious else 0,
                     start_time = datetime.fromisoformat(start_time),
-                    end_time = datetime.fromisoformat(end_time)
+                    end_time = datetime.fromisoformat(end_time),
+                    is_suspicious = suspicious
                 )
                 
                 db.add(new_record)
@@ -475,6 +491,8 @@ class ProctoringController:
                 db.refresh(new_record)
             
             elif exam_type.lower() == 'desc':
+                suspicious = True if is_content_suspicious else True if not is_match else False
+                
                 new_record = StudentDESCExamAudioChunk(
                     attemptID = attempt_id,
                     question_id = question_id,
@@ -484,13 +502,14 @@ class ProctoringController:
                     other_person = 1 if other_person else 0,
                     other_suspicous = 1 if is_content_suspicious else 0,
                     start_time = datetime.fromisoformat(start_time),
-                    end_time = datetime.fromisoformat(end_time)
+                    end_time = datetime.fromisoformat(end_time),
+                    is_suspicious = suspicious
                 )
                 
                 db.add(new_record)
                 db.commit()
                 db.refresh(new_record)
-                print('record added in db')
+                print(f'record added in db with id {new_record.ID}')
 
         except Exception as e:
             print(f"ERROR: {e}")
@@ -518,6 +537,8 @@ class ProctoringController:
         # 1.5 sec * 16000 = 24000 samples — har baar window itna aage khiskega
         stride = int(stride_sec * sr)
 
+
+        print(f'inside diarize by identity enrolled:')
         # agar student ki koi enrolled voice nahi hai
         # ya audio itni choti hai ke ek bhi window fit nahi hota
         if enrolled is None or len(waveform) < window:

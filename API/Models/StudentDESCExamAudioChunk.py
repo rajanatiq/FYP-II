@@ -17,6 +17,7 @@ class StudentDESCExamAudioChunk(Base):
     other_suspicous: Mapped[bool] = mapped_column(Boolean, nullable=True)
     start_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    is_suspicious: Mapped[bool] = mapped_column(Boolean)
     
     examAttempt_rship = relationship("ExamAttempt", back_populates="audio_chunks_des_rship")
     exam_desc_qst_rship = relationship('ExamDescQues', back_populates='audio_chunks_des_rship')
