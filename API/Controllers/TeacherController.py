@@ -14,7 +14,7 @@ from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users
 
 
 image_base_url = 'http://192.168.100.57:8000/images/'
-audio_base_url = 'http://192.168.100.57:8000/audios/'
+audio_base_url = 'http://192.168.100.108:8000/audios/'
 
 
 
@@ -148,7 +148,7 @@ class TeacherController:
                     Student.StudentID.label("studentID"),
                     Users.Name.label("studentName"),
                     Users.identity_no.label("identityNo"),
-                    func.concat(Department.name, "-", Section.name).label("section")
+                    func.concat(Department.name, "-", Student.semester ,Section.name).label("section")
                 )
                 .select_from(ExamAttempt)
                 .join(Exam, Exam.ID == ExamAttempt.examID)
@@ -346,32 +346,39 @@ class TeacherController:
         return output_path
     
     @staticmethod
-    def fetchStudentAudioLogs(attemptId: int, db: Session):
+    def fetchStudentAudioLogs(studentId: int, examId: int, db: Session):
         try:    
-            e_type = (
-                db.query(Exam.E_TYPE)
+            exam = (
+                db.query(Exam.E_TYPE, ExamAttempt.ID)
                 .join(ExamAttempt, ExamAttempt.examID == Exam.ID)
-                .filter(ExamAttempt.ID == 100)
-                .scalar()
+                .filter(ExamAttempt.studentID == studentId, ExamAttempt.examID == examId)
+                .first()
             )
             
-            print(e_type)
-            if e_type:
-                print('inside exam')
+            if exam:
+                
+                e_type, attemptId = exam
+                status = ""
+                
                 if not e_type.lower() == "mcq":
                     
                     all_records = db.query(StudentMCQExamAudioChunk).filter(
-                        StudentMCQExamAudioChunk.attemptID == attemptId
+                        StudentMCQExamAudioChunk.attemptID == attemptId, 
+                        StudentMCQExamAudioChunk.is_suspicious == True
                     ).all()
                     
                     if all_records:
+                        
                         content = [
                         {
-                            'id': data.ID,
+                            'logid': data.ID,
                             'question_id': data.question_id,
-                            'chunk_url': data.chunk_url,
                             'transcript': data.transcript,
-                            'audio_url': audio_base_url + data.chunk_url
+                            'status': TeacherController.getStatus(data.student_present, data.other_person, data.other_suspicous, data.is_suspicious),
+                            'startTime': data.start_time,
+                            'endTime': data.end_time,
+                            'audio_url': audio_base_url + data.chunk_url,
+                            'examType': 'mcq'
                         }
                         for data in all_records
                     ]           
@@ -382,17 +389,24 @@ class TeacherController:
                 
                 # elif e_type.lower() == "desc":
                 else:
+                    
                     all_records = db.query(StudentDESCExamAudioChunk).filter(
-                        StudentDESCExamAudioChunk.attemptID == attemptId
+                        StudentDESCExamAudioChunk.attemptID == attemptId, 
+                        StudentDESCExamAudioChunk.is_suspicious == True
                     ).all()
                     
                     if all_records:
+                        
                         content = [
                         {
-                            'id': data.ID,
+                            'logid': data.ID,
                             'question_id': data.question_id,
                             'transcript': data.transcript,
-                            'audio_url': audio_base_url + data.chunk_url
+                            'status': TeacherController.getStatus(data.student_present, data.other_person, data.other_suspicous, data.is_suspicious),
+                            'startTime': data.start_time,
+                            'endTime': data.end_time,
+                            'audio_url': audio_base_url + data.chunk_url,
+                            'examType': 'desc'
                         }
                         for data in all_records
                     ]         
@@ -405,3 +419,45 @@ class TeacherController:
                 return {'error': 'No record found against this exam.'}
         except Exception as e:
             return {'fail': f'database error {e}'}
+        
+        
+    @staticmethod
+    def getStatus(student_present: bool, other_person: bool, other_suspicous: bool, is_suspicious: bool):
+        
+        if is_suspicious:
+            
+            if other_person and student_present:
+                return 'suspicious: other person detected'
+            elif other_suspicous and student_present:
+                return 'suspicious: possible voice detected'
+            elif other_suspicous and not student_present:
+                return 'other person suspicious content'
+            elif not student_present:
+                return 'student not present'
+            else:
+                return 'suspicious'
+        
+        return
+    
+    @staticmethod
+    def markVoiceAsUnsuspicious(logId: int, examType: str, db: Session):
+        try:
+            if examType.lower() == 'mcq':
+                record = db.query(StudentMCQExamAudioChunk).filter(StudentMCQExamAudioChunk.ID == logId).first()
+                
+                if record:
+                    record.is_suspicious = False
+                    db.commit()
+                return {'success': 'record updated'}
+            
+            elif examType.lower() == 'desc':
+                desc_record = db.query(StudentDESCExamAudioChunk).filter(StudentDESCExamAudioChunk.ID == logId).first()
+                
+                if desc_record:
+                    desc_record.is_suspicious = False
+                    db.commit()
+                    return {'success': 'record updated'}
+                
+        except Exception as e:
+            db.rollback()
+            return {'error': f'database error {e}'}

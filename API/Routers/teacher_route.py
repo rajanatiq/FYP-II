@@ -33,10 +33,14 @@ def getImages(data: StudentLog, db:Session = Depends(get_db)):
 def deleteStudentLogRecord(logId: int, db: Session = Depends(get_db)):
     return TeacherController.deleteStudentLogRecord(logId, db)
 
-@router.get('/fetchStudentAudioLogs/{attempt_id}')
-def fetchStudentAudioLogs(attempt_id: int, db: Session = Depends(get_db)):
-    return TeacherController.fetchStudentAudioLogs(attempt_id, db)
+@router.get('/fetchStudentAudioLogs/{stdId}/{examId}')
+def fetchStudentAudioLogs(stdId: int, examId: int,  db: Session = Depends(get_db)):
+    return TeacherController.fetchStudentAudioLogs(stdId, examId, db)
 
 @router.get('/fetchStudentRecording/{std_id}/{exam_id}')
 def fetchStudentRecording(std_id: int, exam_id: int, db: Session = Depends(get_db)):
     return TeacherController.fetchStudentRecording(std_id, exam_id, db)
+
+@router.get('/markVoiceAsUnsuspicious/{logId}/{examtype}')
+def markVoiceAsUnsuspicious(logId: int, examtype: str, db: Session = Depends(get_db)):
+    return TeacherController.markVoiceAsUnsuspicious(logId, examtype, db)
