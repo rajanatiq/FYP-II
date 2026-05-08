@@ -330,6 +330,7 @@ class ProctoringController:
     #   recorded_at — ISO timestamp from frontend: when AudioRecord.stop() was called on device
     #                 e.g. "2026-04-30T14:30:25.123Z"  stored in DB as the chunk's timestamp
     # ─────────────────────────────────────────────────────────────────────
+    
     @staticmethod
     async def VoiceProctoringDiarize(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, start_time: str, end_time: str, db: Session):
         '''
@@ -338,10 +339,6 @@ class ProctoringController:
         Multiple speakers → labeled transcript (Student/Other), student-only ECAPA score.
         Suspicious audio always saved to DB.
         '''
-        
-        print(f'identity no: {identity_no}, attempt id: {attempt_id}, question id: {question_id}, exam type: {exam_type}, start time: {start_time}, end time: {end_time}')
-        
-        
         # STEP 1: Read uploaded audio bytes from the request
         audio_bytes = await file.read()
         if not audio_bytes:
@@ -444,20 +441,34 @@ class ProctoringController:
                 return {'status': 'match', 'speakers': 1, 'score': score}
 
             # STEP 5B: OTHER speaker detected — labeled transcript + NLI
-            labeled_transcript, score, is_match = ProctoringController._build_labeled_transcript(
+            # is_match = True if STUDENT appears in any segment (mixed), False if completely absent.
+            labeled_transcript, score, _ = ProctoringController._build_labeled_transcript(
                 full_path, diar_segments, identity_no, best_score
             )
+            is_match = "STUDENT" in unique_labels
+
+            # Completely OTHER — student absent, skip NLI
+            if not is_match:
+                ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, labeled_transcript, False, True, False, start_time, end_time)
+                return {
+                    'status': 'suspicious',
+                    'is_match': False,
+                    'speakers': len(unique_labels),
+                    'score': score,
+                    'transcript': labeled_transcript,
+                    'other_suspicious': False,
+                    'nli_score': 0.0,
+                }
+
+            # Mixed (STUDENT + OTHER) — run NLI on other person's text
             other_texts = re.findall(r'Other \([\d.]+s-[\d.]+s\):([^|]+)', labeled_transcript)
             other_combined = " ".join(t.strip() for t in other_texts)
             is_content_suspicious, nli_score = ProctoringController._is_transcript_suspicious(other_combined)
-            # err = _save_to_db(labeled_transcript)
-            # if err:
-            #     return {'error': f'database error: {err}'}
-            
-            ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, labeled_transcript, is_match, True if len(unique_labels) > 1 else False , is_content_suspicious, start_time , end_time)
-            
+
+            ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, labeled_transcript, is_match, True, is_content_suspicious, start_time, end_time)
+
             print('last matched')
-            
+
             return {
                 'status': 'suspicious',
                 'is_match': is_match,
@@ -470,6 +481,148 @@ class ProctoringController:
 
         except Exception as e:
             return {'error': str(e)}
+    
+    
+    # @staticmethod
+    # async def VoiceProctoringDiarize(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, start_time: str, end_time: str, db: Session):
+    #     '''
+    #     Diarization-aware voice monitoring.
+    #     Single speaker  → standard ECAPA verify, plain transcript on mismatch.
+    #     Multiple speakers → labeled transcript (Student/Other), student-only ECAPA score.
+    #     Suspicious audio always saved to DB.
+    #     '''
+        
+    #     print(f'identity no: {identity_no}, attempt id: {attempt_id}, question id: {question_id}, exam type: {exam_type}, start time: {start_time}, end time: {end_time}')
+        
+        
+    #     # STEP 1: Read uploaded audio bytes from the request
+    #     audio_bytes = await file.read()
+    #     if not audio_bytes:
+    #         return {'error': 'no audio received'}
+
+    #     # STEP 2: Convert incoming audio to WAV (16kHz mono) regardless of original format.
+    #     # Handles: .wav, .ogg, .mp3, .mp4, .m4a, .flac, etc.
+    #     # File is always saved as .wav — original format is not kept.
+    #     wav_bytes = ProctoringController._to_wav_bytes(audio_bytes)
+
+    #     # STEP 3: Save WAV file to server disk
+    #     # Saved at (full path) : API/Assets/Audio/VoiceMonitoring/{attempt_id}/q{question_id}_{timestamp}.wav
+    #     # relative_path (for DB): {attempt_id}/q{question_id}_{timestamp}.wav
+    #     # Example              : 5/q3_20260430143022.wav
+    #     relative_path = ProctoringController.saveAudioOnServer(wav_bytes, attempt_id, question_id, "wav")
+    #     # full_path is needed by Whisper and ECAPA (they read from disk, not from bytes)
+    #     full_path = os.path.join(audios_base_folder, relative_path)
+    #     print(f'[DIARIZE] Audio saved: {relative_path}')
+
+    #     # STEP 3: Parse frontend timestamp. Fallback to server time if invalid/missing.
+    #     try:
+    #         chunk_timestamp = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+    #     except Exception:
+    #         chunk_timestamp = datetime.now()
+
+            
+    #     # STEP 4: Inner helper — saves a suspicious audio record to the DB.
+    #     # MCQ  exam → StudentMCQExamAudioChunk  (chunk_url = relative_path, transcript = Whisper text)
+    #     # DESC exam → StudentDESCExamAudioChunk (chunk_url = relative_path, no transcript column)
+    #     # timestamp = frontend recorded_at (when AudioRecord.stop() was called on device)
+    #     # def _save_to_db(transcript=None):
+    #     #     try:
+    #     #         if exam_type.lower() == 'mcq':
+    #     #             record = StudentMCQExamAudioChunk(
+    #     #                 attemptID=attempt_id,
+    #     #                 question_id=question_id,
+    #     #                 chunk_url=relative_path,   # e.g. "5/q3_20260430143022.wav"
+    #     #                 transcript=transcript,
+    #     #                 timestamp=chunk_timestamp,
+    #     #             )
+    #     #         else:
+    #     #             record = StudentDESCExamAudioChunk(
+    #     #                 attemptID=attempt_id,
+    #     #                 question_id=question_id,
+    #     #                 chunk_url=relative_path,
+    #     #                 timestamp=chunk_timestamp,
+    #     #             )
+    #     #         db.add(record)
+    #     #         db.commit()
+    #     #         return None  # None means no error
+    #     #     except Exception as e:
+    #     #         db.rollback()
+    #     #         return str(e)  # Returns error string if DB fails
+
+    #     # STEP 4: ECAPA sliding-window diarization — classifies each window as STUDENT or OTHER
+    #     try:
+    #         diar_segments, best_score = ProctoringController._diarize_by_identity(full_path, identity_no)
+    #         unique_labels = {s[2] for s in diar_segments}
+            
+    #         print('printing unique labels................')
+    #         for i in unique_labels:
+    #             print(i)
+                
+    #         has_other = "OTHER" in unique_labels
+    #         is_match = best_score >= MATCH_THRESHOLD
+    #         print(f'[DIARIZE] attempt={attempt_id}, other_speaker={has_other}, score={best_score}')
+
+    #         print(f'has_other = {has_other}')
+            
+    #         # STEP 5A: Only student detected — standard verify (handles no_speech + score)
+    #         if not has_other:
+    #             verification = verify_student_voice(identity_no, wav_bytes)
+    #             if verification.get("no_speech"):
+                    
+    #                 # db, examtype, attemptid, questionid, path, transcript, student voice matched ?, other person present? , iscontentsuspicious, starttime, endtime
+                    
+    #                 ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, "", True, False, True, start_time , end_time)
+                    
+                    
+    #                 # ave_audio_to_db(db: Session, exam_type: str, attempt_id: int, question_id: int, relative_path: str, labeled_transcript: str, is_match: bool, other_person: bool, is_content_suspicious:bool, start_time: str, end_time: str):
+                        
+                        
+    #                 return {'status': 'silence', 'speakers': 1}
+    #             is_match = verification.get("is_match", False)
+    #             score = verification.get("score", 0)
+                
+    #             transcript = transcribe_audio(full_path)
+    #             print(transcript)
+    #             if not is_match:
+    #                 # err = _save_to_db(transcript)
+    #                 # if err:
+                    
+    #                 #     return {'error': f'database error: {err}'}
+    #                 print('single user but not matched')
+    #                 ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, transcript, is_match, True, True, start_time , end_time)
+                    
+    #                 return {'status': 'suspicious', 'speakers': 1, 'score': score, 'transcript': transcript}
+    #             ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, transcript, is_match, False, False, start_time , end_time)
+                
+    #             return {'status': 'match', 'speakers': 1, 'score': score}
+
+    #         # STEP 5B: OTHER speaker detected — labeled transcript + NLI
+    #         labeled_transcript, score, is_match = ProctoringController._build_labeled_transcript(
+    #             full_path, diar_segments, identity_no, best_score
+    #         )
+    #         other_texts = re.findall(r'Other \([\d.]+s-[\d.]+s\):([^|]+)', labeled_transcript)
+    #         other_combined = " ".join(t.strip() for t in other_texts)
+    #         is_content_suspicious, nli_score = ProctoringController._is_transcript_suspicious(other_combined)
+    #         # err = _save_to_db(labeled_transcript)
+    #         # if err:
+    #         #     return {'error': f'database error: {err}'}
+            
+    #         ProctoringController.save_audio_to_db(db, exam_type, attempt_id, question_id, relative_path, labeled_transcript, is_match, True if len(unique_labels) > 1 else False , is_content_suspicious, start_time , end_time)
+            
+    #         print('last matched')
+            
+    #         return {
+    #             'status': 'suspicious',
+    #             'is_match': is_match,
+    #             'speakers': len(unique_labels),
+    #             'score': score,
+    #             'transcript': labeled_transcript,
+    #             'other_suspicious': is_content_suspicious,
+    #             'nli_score': nli_score,
+    #         }
+
+    #     except Exception as e:
+    #         return {'error': str(e)}
 
     @staticmethod
     def save_audio_to_db(db: Session, exam_type: str, attempt_id: int, question_id: int, relative_path: str, labeled_transcript: str, is_match: bool, other_person: bool, is_content_suspicious:bool, start_time: str, end_time: str):

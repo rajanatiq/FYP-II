@@ -227,7 +227,7 @@ class ExamController:
             
             if record:
                 print("success")
-                return {"success": True,'attempt_id': record.ID}
+                return {"success": True,'attempt_id': record.ID, 'status': record.status}
             else:
                 new_record = ExamAttempt(
                     studentID = data.s_id,
@@ -237,6 +237,7 @@ class ExamController:
                 db.commit()
                 print(f"false {new_record.ID}")
                 return {"success": False, 'attempt_id': new_record.ID}
+            
         except Exception as e:
             print(f"error: {e}")
             db.rollback()
