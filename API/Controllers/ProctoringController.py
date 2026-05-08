@@ -631,7 +631,6 @@ class ProctoringController:
                 
                 suspicious = True if is_content_suspicious else True if not is_match else False
                 
-                
                 new_record = StudentMCQExamAudioChunk(
                     attemptID = attempt_id,
                     question_id = question_id,
