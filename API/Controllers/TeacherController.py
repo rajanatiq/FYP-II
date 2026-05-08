@@ -13,8 +13,8 @@ root_dir = Path(__file__).resolve().parent.parent # Points to API Folder
 from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
 
 
-image_base_url = 'http://192.168.100.57:8000/images/'
-audio_base_url = 'http://192.168.100.108:8000/audios/'
+image_base_url = 'http://192.168.100.110:8000/images/'
+audio_base_url = 'http://192.168.100.110:8000/audios/'
 
 
 

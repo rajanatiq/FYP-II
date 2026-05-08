@@ -18,7 +18,9 @@ from datetime import datetime
 import asyncio
 import mediapipe as mp
 from ultralytics import YOLO #type: ignore
+from concurrent.futures import ProcessPoolExecutor
 
+process_executor = ProcessPoolExecutor(max_workers=6)
 
 root_dir = Path(__file__).resolve().parent.parent  # Points to API Folder
 
@@ -139,7 +141,7 @@ class ProctoringController:
                         position = "Identity Mismatched. Unauthorized Person Detected!"
                     # return {"pose": pose}
 
-                serverImagePath = ProctoringController.saveImageOnServer(image_bytes, attempt_id)
+                serverImagePath = ProctoringController.saveImageOnServer(image_bytes, attempt_id, time)
                 new_record.TIMESTAMP = datetime.now()
                 new_record.image_path = serverImagePath
                 # print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
@@ -251,14 +253,14 @@ class ProctoringController:
         return {"message": "Image saved successfully", "file_path": file_path}
 
     @staticmethod
-    def saveImageOnServer(image_bytes, attempt_id):
+    def saveImageOnServer(image_bytes, attempt_id, time):
         '''Helper function to save the image on the server, by creating unique file name.'''
         image_path = os.path.join(pictures_base_folder, str(attempt_id))
 
         if not os.path.exists(image_path):
             os.mkdir(image_path)
 
-        filename = ProctoringController.getTimeStamp() + ".jpg"
+        filename = time + ".jpg"
         print(filename)
         image_path = os.path.join(image_path, filename)
 
@@ -336,6 +338,10 @@ class ProctoringController:
         Multiple speakers → labeled transcript (Student/Other), student-only ECAPA score.
         Suspicious audio always saved to DB.
         '''
+        
+        print(f'identity no: {identity_no}, attempt id: {attempt_id}, question id: {question_id}, exam type: {exam_type}, start time: {start_time}, end time: {end_time}')
+        
+        
         # STEP 1: Read uploaded audio bytes from the request
         audio_bytes = await file.read()
         if not audio_bytes:
@@ -788,54 +794,54 @@ class ProctoringController:
                 face_count = 0
         return face_count
 
-    # @staticmethod
-    # async def VoiceProctoring(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, db: Session):
-    #     '''Saves audio, runs speaker verification. If mismatch, transcribe and store in DB.'''
-    #
-    #     audio_bytes = await file.read()
-    #     if not audio_bytes:
-    #         return {'error': 'no audio received'}
-    #
-    #     ext = file.filename.split(".")[-1] if file.filename else "wav"
-    #
-    #     relative_path = ProctoringController.saveAudioOnServer(audio_bytes, attempt_id, question_id, ext)
-    #
-    #     full_path = os.path.join(audios_base_folder, relative_path)
-    #     print(f'Audio saved: {relative_path}')
-    #
-    #     if exam_type.lower() == 'mcq':
-    #         verification = verify_student_voice(identity_no, audio_bytes)
-    #
-    #         if verification.get("no_speech"):
-    #             print("No speech detected — skipping")
-    #             return {'status': 'silence'}
-    #
-    #         is_match = verification.get("is_match", False)
-    #         score = verification.get("score", 0)
-    #         print(f'Voice match: {is_match}, score: {score}')
-    #
-    #         new_record = StudentMCQExamAudioChunk(
-    #                     attemptID=attempt_id,
-    #                     question_id=question_id,
-    #                     chunk_url=relative_path
-    #                 )
-    #
-    #         if not is_match:
-    #             transcript = transcribe_audio(full_path)
-    #             new_record.transcript = transcript
-    #
-    #         try:
-    #             db.add(new_record)
-    #             db.commit()
-    #         except Exception as e:
-    #             db.rollback()
-    #             return {'error': f'database error {e}'}
-    #
-    #             return {'status': 'suspicious', 'score': score, 'transcript': transcript}
-    #
-    #         return {'status': 'match', 'score': score}
-    #
-    #     return {'audio_path': relative_path}
+    @staticmethod
+    async def VoiceProctoring(file: UploadFile, attempt_id: int, identity_no: str, question_id: int, exam_type: str, db: Session):
+        '''Saves audio, runs speaker verification. If mismatch, transcribe and store in DB.'''
+    
+        audio_bytes = await file.read()
+        if not audio_bytes:
+            return {'error': 'no audio received'}
+    
+        ext = file.filename.split(".")[-1] if file.filename else "wav"
+    
+        relative_path = ProctoringController.saveAudioOnServer(audio_bytes, attempt_id, question_id, ext)
+    
+        full_path = os.path.join(audios_base_folder, relative_path)
+        print(f'Audio saved: {relative_path}')
+    
+        if exam_type.lower() == 'mcq':
+            verification = verify_student_voice(identity_no, audio_bytes)
+    
+            if verification.get("no_speech"):
+                print("No speech detected — skipping")
+                return {'status': 'silence'}
+    
+            is_match = verification.get("is_match", False)
+            score = verification.get("score", 0)
+            print(f'Voice match: {is_match}, score: {score}')
+    
+            new_record = StudentMCQExamAudioChunk(
+                        attemptID=attempt_id,
+                        question_id=question_id,
+                        chunk_url=relative_path
+                    )
+    
+            if not is_match:
+                transcript = transcribe_audio(full_path)
+                new_record.transcript = transcript
+    
+            try:
+                db.add(new_record)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                return {'error': f'database error {e}'}
+    
+                return {'status': 'suspicious', 'score': score, 'transcript': transcript}
+    
+            return {'status': 'match', 'score': score}
+    
+        return {'audio_path': relative_path}
 
     # async def FaceProctoring(file: UploadFile, EX_ID: int, S_ID: int, db: Session):
 
@@ -887,92 +893,92 @@ class ProctoringController:
             return "DOWN"
         return "CENTER"
     
-    @staticmethod
-    async def FaceProctoringParallel(file: UploadFile, attempt_id: int, identity_no: str, db: Session):
-        '''This method checks the face proctoring, saving the image on the server and add's the entry in the database in the student exam log table. '''
+    # @staticmethod
+    # async def FaceProctoringParallel(file: UploadFile, attempt_id: int, identity_no: str, db: Session):
+    #     '''This method checks the face proctoring, saving the image on the server and add's the entry in the database in the student exam log table. '''
 
-        try:
-            examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
+    #     try:
+    #         examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
 
-            if examAttempt:
+    #         if examAttempt:
                 
-                image_bytes = await file.read()
+    #             image_bytes = await file.read()
                 
-                if not image_bytes:
+    #             if not image_bytes:
 
-                    new_record = StudentExamLog(
-                        attempt_id = attempt_id,
-                        TIMESTAMP = datetime.now(),
-                        position = 'unknow',
-                        isPresent = 0,
-                        image_path = None, 
-                        eye_gaze = None
-                    )
-                    db.add(new_record)
-                    db.commit()
-                    return {'error': 'no image found'}
+    #                 new_record = StudentExamLog(
+    #                     attempt_id = attempt_id,
+    #                     TIMESTAMP = datetime.now(),
+    #                     position = 'unknow',
+    #                     isPresent = 0,
+    #                     image_path = None, 
+    #                     eye_gaze = None
+    #                 )
+    #                 db.add(new_record)
+    #                 db.commit()
+    #                 return {'error': 'no image found'}
                     
-                image_array = ProctoringController.bytes_to_numpy(image_bytes)
+    #             image_array = ProctoringController.bytes_to_numpy(image_bytes)
 
-                face_count = ProctoringController.count_face(image_array)
+    #             face_count = ProctoringController.count_face(image_array)
 
-                serverImagePath = ProctoringController.saveImageOnServer(image_bytes, attempt_id)
-                new_record = StudentExamLog()
-                new_record.attempt_id = attempt_id
-                new_record.TIMESTAMP = datetime.now()
+    #             serverImagePath = ProctoringController.saveImageOnServer(image_bytes, attempt_id)
+    #             new_record = StudentExamLog()
+    #             new_record.attempt_id = attempt_id
+    #             new_record.TIMESTAMP = datetime.now()
 
-                position = "unknown"
+    #             position = "unknown"
                 
-                try:
+    #             try:
                     
-                    if face_count > 1:
-                        new_record.isPresent = True
-                        new_record.position = "multiple face detected"
-                        position = "Multiple faces detected"
+    #                 if face_count > 1:
+    #                     new_record.isPresent = True
+    #                     new_record.position = "multiple face detected"
+    #                     position = "Multiple faces detected"
                     
-                    elif face_count == 0:
-                        new_record.isPresent = False
-                        new_record.position = "none"
-                        position = "no face detected"
+    #                 elif face_count == 0:
+    #                     new_record.isPresent = False
+    #                     new_record.position = "none"
+    #                     position = "no face detected"
                         
-                    else:
-                        identity_verified, pose, eye_gaze = await asyncio.gather(
-                            asyncio.to_thread( UserController.verifyPerson, identity_no, image_array),
-                            asyncio.to_thread( PoseEstimationClass.process_face_pose, image_array), 
-                            asyncio.to_thread( ProctoringController.EyeGazeMovement, image_array)
-                        )
-                        new_record.eye_gaze = eye_gaze
+    #                 else:
+    #                     identity_verified, pose, eye_gaze = await asyncio.gather(
+    #                         asyncio.to_thread( UserController.verifyPerson, identity_no, image_array),
+    #                         asyncio.to_thread( PoseEstimationClass.process_face_pose, image_array), 
+    #                         asyncio.to_thread( ProctoringController.EyeGazeMovement, image_array)
+    #                     )
+    #                     new_record.eye_gaze = eye_gaze
                         
-                        if identity_verified == True:
-                            new_record.position = str(pose)
-                            new_record.isPresent = True 
-                            position = pose
+    #                     if identity_verified == True:
+    #                         new_record.position = str(pose)
+    #                         new_record.isPresent = True 
+    #                         position = pose
 
-                        elif identity_verified == False:
-                            new_record.position = "identity mismatched"
-                            new_record.isPresent = False
-                            position = "Identity Mismatched. Unauthorized Person Detected!"
+    #                     elif identity_verified == False:
+    #                         new_record.position = "identity mismatched"
+    #                         new_record.isPresent = False
+    #                         position = "Identity Mismatched. Unauthorized Person Detected!"
                         
                     
-                    new_record.TIMESTAMP = datetime.now()
-                    new_record.image_path = serverImagePath
-                    # print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
-                    db.add(new_record)
-                    db.commit()
+    #                 new_record.TIMESTAMP = datetime.now()
+    #                 new_record.image_path = serverImagePath
+    #                 # print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
+    #                 db.add(new_record)
+    #                 db.commit()
 
-                    return {'pose': position}
+    #                 return {'pose': position}
                 
-                except Exception as e:
-                    db.rollback()
-                    print(f'ERROR: {e}')
-                    return {'fail': f"data base error {e}"}
+    #             except Exception as e:
+    #                 db.rollback()
+    #                 print(f'ERROR: {e}')
+    #                 return {'fail': f"data base error {e}"}
 
-            else:
-                return {'fail': 'no student record found. '}
+    #         else:
+    #             return {'fail': 'no student record found. '}
             
-        except Exception as e:
-            db.rollback()
-            return {'fail': 'ERROR'}
+    #     except Exception as e:
+    #         db.rollback()
+    #         return {'fail': 'ERROR'}
         
         
     @staticmethod
@@ -1004,3 +1010,108 @@ class ProctoringController:
         }
     
     
+    
+    @staticmethod
+    async def FaceProctoringParallel(file: UploadFile, attempt_id: int, identity_no: str, time: str, db: Session):
+        '''This method checks the face proctoring, saving the image on the server and adds the entry in the database in the student exam log table.'''
+        try:
+            examAttempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
+            
+            if not examAttempt:
+                return {'fail': 'no student record found.'}
+
+            image_bytes = await file.read()
+            
+            if not image_bytes:
+                new_record = StudentExamLog(
+                    attempt_id=attempt_id,
+                    TIMESTAMP=datetime.now(),
+                    position='unknown',
+                    isPresent=0,
+                    image_path=None,
+                    eye_gaze=None
+                )
+                db.add(new_record)
+                db.commit()
+                return {'error': 'no image found'}
+
+            loop = asyncio.get_event_loop()
+            
+            # Numpy conversion
+            image_array = await asyncio.to_thread(ProctoringController.bytes_to_numpy, image_bytes)
+
+            # Face count pehle check karo
+            face_count = await loop.run_in_executor(
+                process_executor,
+                ProctoringController.count_face,
+                image_array
+            )
+
+            position = "unknown"
+            is_present = False
+            eye_gaze = None
+            server_path = None
+
+            if face_count > 1:
+                # Multiple faces - sirf image save karo, ML skip karo
+                server_path = await asyncio.to_thread(
+                    ProctoringController.saveImageOnServer, image_bytes, attempt_id, time
+                )
+                is_present = True
+                position = "Multiple faces detected"
+
+            elif face_count == 0:
+                # No face - sirf image save karo, ML skip karo
+                server_path = await asyncio.to_thread(
+                    ProctoringController.saveImageOnServer, image_bytes, attempt_id, time
+                )
+                is_present = False
+                position = "no face detected"
+
+            else:
+                # Ek face mila - image save + teeno ML parallel chalao
+                try:
+                    server_path, (identity_verified, pose, eye_gaze) = await asyncio.gather(
+                        asyncio.to_thread(ProctoringController.saveImageOnServer, image_bytes, attempt_id, time),
+                        asyncio.gather(
+                            loop.run_in_executor(process_executor, UserController.verifyPerson, identity_no, image_array),
+                            loop.run_in_executor(process_executor, PoseEstimationClass.process_face_pose, image_array),
+                            loop.run_in_executor(process_executor, ProctoringController.EyeGazeMovement, image_array)
+                        )
+                    )
+
+                    if identity_verified:
+                        position = str(pose)
+                        is_present = True
+                    else:
+                        position = "identity mismatched"
+                        is_present = False
+
+                except Exception as e:
+                    db.rollback()
+                    print(f'ML Processing ERROR: {e}')
+                    return {'fail': f'ML processing error: {e}'}
+
+            # Ek baar DB mein save karo - sab data ready hai
+            try:
+                new_record = StudentExamLog(
+                    attempt_id=attempt_id,
+                    TIMESTAMP=datetime.now(),
+                    position=position,
+                    isPresent=is_present,
+                    image_path=server_path,
+                    eye_gaze=eye_gaze
+                )
+                db.add(new_record)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                print(f'DB ERROR: {e}')
+                return {'fail': f'database error: {e}'}
+
+            return {'pose': position}
+
+        except Exception as e:
+            db.rollback()
+            print(f'ERROR: {e}')
+            return {'fail': f'ERROR: {e}'}

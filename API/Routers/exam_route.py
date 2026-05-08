@@ -49,7 +49,12 @@ def addStudentExamRecord(data: AttemptedExam, db:Session= session):
 def setExamStatusToComplete(exam_id: int, db: Session=session):
     return ExamController.setExamStatusToComplete(exam_id, db)
 
+@router.get('/checkBackCamera/{attempt_id}')
+def checkBackCamera(attempt_id: int, db: Session = session):
+    return ExamController.checkBackCamera(attempt_id, db)
+
 # MARK: POST METHODS
 @router.post('/saveMcqAnswers')
 def save_mcq_answers(data: List[SaveMcqAns], attempt_id: int, db: Session = session):
     return ExamController.save_mcq_answers(data,attempt_id, db)
+

@@ -57,3 +57,17 @@ app.include_router(proctoring_route.router)
 app.include_router(teacher_route.router)
 #app.include_router(voice_route.router)
 
+
+
+from concurrent.futures import ProcessPoolExecutor
+
+process_executor = ProcessPoolExecutor(max_workers=6)
+
+@app.on_event("startup")
+async def startup():
+    print("Process pool started")
+
+@app.on_event("shutdown")
+async def shutdown():
+    process_executor.shutdown(wait=True)
+    print("Process pool closed")

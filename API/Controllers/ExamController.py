@@ -219,6 +219,7 @@ class ExamController:
         try:
             print(f"student id: {data.s_id}")
             print(f"Exam id: {data.e_id}")
+            
             record = db.query(ExamAttempt).filter(
                 ExamAttempt.studentID == data.s_id,
                 ExamAttempt.examID == data.e_id
@@ -237,6 +238,7 @@ class ExamController:
                 print(f"false {new_record.ID}")
                 return {"success": False, 'attempt_id': new_record.ID}
         except Exception as e:
+            print(f"error: {e}")
             db.rollback()
             return {"error": "Database error. try again."}
     
@@ -285,3 +287,15 @@ class ExamController:
        
         
         
+        
+    @staticmethod
+    def checkBackCamera(attempt_id: int, db: Session):
+        """Method to check if student has used back camera during the exam attempt."""
+        try:
+            attempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
+            if not attempt:
+                return {'error': 'no exam attempt found for this attempt id.'}
+            else:
+                return {'success': attempt.back_cam}
+        except Exception as e:
+            return {'error': f'Database error {e}'}
