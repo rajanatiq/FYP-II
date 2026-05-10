@@ -43,9 +43,9 @@ async def voiceProctoringDiarize(
     return await ProctoringController.VoiceProctoringDiarize(file, attempt_id, identity_no, question_id, exam_type, start_time, end_time, db)
 
 
-@router.post('/detecObjects')
-async def ObjectDetection(file: UploadFile = File(...), attempt_id: int = Form(...), db: Session = Depends(get_db)):
-    return await ProctoringController.detect_objects(file, attempt_id)
+@router.post('/detectObjects')
+async def ObjectDetection(file: UploadFile = File(...), attempt_id: int = Form(...), time: str = Form(...), db: Session = Depends(get_db)):
+    return await ProctoringController.detect_objects(file, attempt_id, time, db)
 
 
 # uvicorn main:app --reload --host 0.0.0.0 --port 8000 

@@ -300,3 +300,18 @@ class ExamController:
                 return {'success': attempt.back_cam}
         except Exception as e:
             return {'error': f'Database error {e}'}
+        
+        
+    @staticmethod
+    def setBackCameraStatus(attempt_id: int, db: Session):
+        """Method to set the back camera status to true if student has used back camera during the exam attempt."""
+        try:
+            attempt = db.query(ExamAttempt).filter(ExamAttempt.ID == attempt_id).first()
+            if not attempt:
+                return {'error': 'no exam attempt found for this attempt id.'}
+            else:
+                attempt.back_cam = True
+                db.commit()
+                return {'success': True}
+        except Exception as e:
+            return {'error': f'Database error {e}'}

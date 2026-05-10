@@ -29,7 +29,7 @@ yolo_model_path = str(root_dir.parent / "ML/ObjectDetection/yolov8n.pt")
 object_detection_model = YOLO(yolo_model_path)
 
 # import Models
-from Models import (ProctoringEvent, CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
+from Models import (ProctoringEvent, CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk, DetectedObjects)
 
 # tarined models for prediction
 from ML.FaceCount.faceCount import FaceCounter
@@ -62,6 +62,7 @@ predict = PoseEstimation()
 retina_face_model = RetinaFace.build_model()  # Building Retina Face Model Once.
 
 pictures_base_folder = str(root_dir / 'Assets/Images/CameraMonitoring')  # Points to Camera Monitoring folder
+back_camera_base_folder = str(root_dir / 'Assets/Images/BackCamera')  # Points to Back Camera folder
 audios_base_folder = str(root_dir / 'Assets/Audio/VoiceMonitoring')  # Points to Voice Monitoring folder
 
 
@@ -141,7 +142,7 @@ class ProctoringController:
                         position = "Identity Mismatched. Unauthorized Person Detected!"
                     # return {"pose": pose}
 
-                serverImagePath = ProctoringController.saveImageOnServer(image_bytes, attempt_id, time)
+                serverImagePath = ProctoringController.saveImageOnServer(pictures_base_folder,image_bytes, attempt_id, time)
                 new_record.TIMESTAMP = datetime.now()
                 new_record.image_path = serverImagePath
                 # print(f"file path = {serverImagePath}, time: {new_record.TIMESTAMP}")
@@ -253,9 +254,10 @@ class ProctoringController:
         return {"message": "Image saved successfully", "file_path": file_path}
 
     @staticmethod
-    def saveImageOnServer(image_bytes, attempt_id, time):
+    def saveImageOnServer(baseFolder, image_bytes, attempt_id, time):
         '''Helper function to save the image on the server, by creating unique file name.'''
-        image_path = os.path.join(pictures_base_folder, str(attempt_id))
+        # image_path = os.path.join(pictures_base_folder, str(attempt_id))
+        image_path = os.path.join(baseFolder, str(attempt_id))
 
         if not os.path.exists(image_path):
             os.mkdir(image_path)
@@ -1134,12 +1136,17 @@ class ProctoringController:
         
         
     @staticmethod
-    async def detect_objects(file: UploadFile, attempt_id: int):
+    async def detect_objects(file: UploadFile, attempt_id: int, time: str, db: Session):
 
         contents = await file.read()
         
         image_array = ProctoringController.bytes_to_numpy(contents)
 
+        server_path = await asyncio.to_thread(
+                    ProctoringController.saveImageOnServer, back_camera_base_folder , contents, attempt_id, time
+                )
+        print(f'image save at {server_path}')
+        
         results = object_detection_model(image_array)
 
         detected_flag = False
@@ -1155,7 +1162,29 @@ class ProctoringController:
 
                     if label not in detected_objects:
                         detected_objects.append(label)
-
+        
+        
+        if detected_objects:
+            print("No cheating objects detected.")
+            
+            objects = ""
+            for obj in detected_objects:
+                objects += obj + ","
+                print(f"Detected cheating object: {obj}")   
+            try:
+                new_record = DetectedObjects(
+                    attemptID = attempt_id,
+                    objects = objects,
+                    timestamp = datetime.now(), 
+                    image_path = server_path
+                )
+                db.add(new_record)
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                print(f"DB ERROR: {e}")
+                return {'fail': f'database error: {e}'}
+        
         return {
             "cheating_detected": detected_flag,
             "detected_objects": detected_objects
@@ -1207,7 +1236,7 @@ class ProctoringController:
             if face_count > 1:
                 # Multiple faces - sirf image save karo, ML skip karo
                 server_path = await asyncio.to_thread(
-                    ProctoringController.saveImageOnServer, image_bytes, attempt_id, time
+                    ProctoringController.saveImageOnServer,pictures_base_folder , image_bytes, attempt_id, time
                 )
                 is_present = True
                 position = "Multiple faces detected"
@@ -1215,7 +1244,7 @@ class ProctoringController:
             elif face_count == 0:
                 # No face - sirf image save karo, ML skip karo
                 server_path = await asyncio.to_thread(
-                    ProctoringController.saveImageOnServer, image_bytes, attempt_id, time
+                    ProctoringController.saveImageOnServer, pictures_base_folder, image_bytes, attempt_id, time
                 )
                 is_present = False
                 position = "no face detected"
@@ -1224,7 +1253,7 @@ class ProctoringController:
                 # Ek face mila - image save + teeno ML parallel chalao
                 try:
                     server_path, (identity_verified, pose, eye_gaze) = await asyncio.gather(
-                        asyncio.to_thread(ProctoringController.saveImageOnServer, image_bytes, attempt_id, time),
+                        asyncio.to_thread(ProctoringController.saveImageOnServer, pictures_base_folder, image_bytes, attempt_id, time),
                         asyncio.gather(
                             loop.run_in_executor(process_executor, UserController.verifyPerson, identity_no, image_array),
                             loop.run_in_executor(process_executor, PoseEstimationClass.process_face_pose, image_array),

@@ -18,3 +18,4 @@ class ExamAttempt(Base):
     
     audio_chunks_mcq_rship = relationship("StudentMCQExamAudioChunk", back_populates="examAttempt_rship")
     audio_chunks_des_rship = relationship("StudentDESCExamAudioChunk", back_populates="examAttempt_rship")
+    detected_objects = relationship("DetectedObjects", back_populates="exam_attempt")
