@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
 # import Models
-from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Student, Teacher, Users, Course, Exam, ExamMCQ,MCQOption,MCQAns, ExamAttempt)
+from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Student, Teacher, Users, Course, Exam, ExamMCQ,MCQOption,MCQAns, ExamAttempt, Section)
 
 from Schemas.StudentAnswer import StudentAnswer
 from Schemas.McqAnswer import McqAnswer
@@ -38,8 +38,11 @@ class StudentController:
             Users, Users.ID == Teacher.userID   # get teacher name correctly
         ).join(
             Student, Student.StudentID == CourseEnrollment.StudentID
+        ).join(
+            Section, Section.ID == CourseAllocation.SECTION
         ).filter(
-            Student.StudentID == student_id, 
+            Student.Section == Section.ID,
+            Student.StudentID == student_id,
             CourseEnrollment.Status == 'enrolled',
             CourseAllocation.status == 'allocated'
         ).all()

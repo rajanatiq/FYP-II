@@ -39,7 +39,8 @@ class TeacherController:
                 Course.COURSE_CODE.label('courseCode'),
                 Course.Title.label('courseTitle'),
                 CourseOffering.Semester.label('semester'),
-                func.year(CourseAllocation.AllocationDate)
+                func.year(CourseAllocation.AllocationDate),
+                func.concat(Department.name, "-", CourseOffering.Semester ,Section.name).label("CompleteSection")
             ).join(
                 CourseOffering, CourseOffering.ID == CourseAllocation.OfferingID
             ).join(
@@ -71,7 +72,8 @@ class TeacherController:
                         'section': row.section,
                         'semester': row.semester,
                         'courseCode': row.courseCode,
-                        'courseTitle': row.courseTitle
+                        'courseTitle': row.courseTitle,
+                        'CompleteSection': row.CompleteSection
                     }
                 for row in result   
                 ]

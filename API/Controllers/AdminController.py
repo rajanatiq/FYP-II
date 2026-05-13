@@ -140,7 +140,7 @@ class AdminController:
                 ).scalar()
                 
                 if std_departmentId and std_semester and stdId:
-                    # print(f'Student Id: {stdId}, Student dep ID: {std_departmentId}, Student Semester: {std_semester}, Course Id: {courseId}, year: {year}, session: {enrollment_session}')
+                    print(f'Student Id: {stdId}, Student dep ID: {std_departmentId}, Student Semester: {std_semester}, Course Id: {courseId}, year: {year}, session: {enrollment_session}')
                     
                     isCourseOffered = db.query(CourseOffering.ID).filter(
                         CourseOffering.DEPARTMENT == std_departmentId, 
@@ -155,7 +155,8 @@ class AdminController:
                         offeringId = isCourseOffered
                         
                         isAlreadyEnrolled = db.query(CourseEnrollment.ID).filter(
-                            CourseEnrollment.OfferingID == offeringId
+                            CourseEnrollment.OfferingID == offeringId, 
+                            CourseEnrollment.StudentID == stdId, 
                         ).scalar()
                         
                         if not isAlreadyEnrolled:
@@ -165,14 +166,17 @@ class AdminController:
                                 EnrollmentDate = AdminController.getCurrentDate()
                             )
                             
-                            # db.add(new_enrl)
-                            # db.commit()
-                            # db.refresh(new_enrl)
+                            db.add(new_enrl)
+                            db.commit()
+                            db.refresh(new_enrl)
                             
                             print(f'new enrollment added for course {course_code} against student {stdId} having enrollment id {new_enrl.ID}')
                         else:
                             error_list.append(f'Coures {course_code} already enrolled for studnet {stdId} with enrollment id {isAlreadyEnrolled}')
                             print(f'Coures {course_code} already enrolled for studnet {stdId} with enrollment id {isAlreadyEnrolled}')
+                    else:
+                        print(f'Course {course_code} is not offered for department {std_departmentId} in semester {std_semester} for year {year} and session {enrollment_session}')
+                            
                         
                 else:
                     if not courseId:
@@ -184,11 +188,16 @@ class AdminController:
                     if not std_semester:
                         error_list.append(f'Student semseter not found')
                         
-                    if not stdId:
+                    if not stdId:   
                         error_list.append(f'No Student Id found for arid no {arid_no}')
                         
-                    
+                    print('////////////////////ERRORS/////////////////////////////')
+                    for error in error_list:
+                        print(error)
+                        
+                        
         except Exception as e:
+            db.rollback()
             return {"error": f"Database error: {str(e)}. Please upload file again."}
                
     @staticmethod
@@ -223,7 +232,7 @@ class AdminController:
             if not row.isnull().all():
                 fileContent.append(df.iloc[i].to_dict())
         
-        # AdminController.setCourseAllocationStauts(db)
+        AdminController.setCourseAllocationStauts(db)
         
         try:
             for i in fileContent:
@@ -237,7 +246,7 @@ class AdminController:
                 semester = part2[:-1]
                 
                 
-                department = 3 if part1.startswith('BAI') else 1 if part1.startswith('BSCS') else 2
+                department = 3 if part1.startswith('BAI') else 1 if part1.startswith('BCS') else 2
                     
                 courseOffered = db.query(CourseOffering).filter(
                     CourseOffering.CourseID == courseId, 
@@ -274,24 +283,35 @@ class AdminController:
                     
                     section = part2[-1]
                     
+                    print(f'section name: {section}., department id: {new_off.DEPARTMENT}')
+                    
                     sectionId = db.query(Section.ID).filter(
                         Section.department == new_off.DEPARTMENT, 
                         Section.name == section
-                    ).first()[0] # type: ignore
+                    ).first()
+                    
+                    if sectionId:
+                        sectionId = sectionId[0] 
+                        print(f'section name: {section}, department id: {new_off.DEPARTMENT}')
+                    else:
+                         print(f'Section not found: {section}')
+                        
+                    
+                    print("Section id: ", sectionId)
                     
                     new_off.CourseID = courseId #type: ignore
                     
-                    # db.add(new_off)
-                    # db.commit()
-                    # db.refresh(new_off)
+                    db.add(new_off)
+                    db.commit()
+                    db.refresh(new_off)
                     
                     offeringList.append(new_off)
                     offeringId = new_off.ID
                     
-                    print(f'Course {courseCode} added in course offering with Id: {offeringId} for department {department}')
+                    # print(f'Course {courseCode} added in course offering with Id: {offeringId} for department {department}')
                     
-                else:
-                    print(f'Course {courseCode}, for department: {department} already exists in course offering having Id: {courseOffered.ID}')
+                # else:
+                #     print(f'Course {courseCode}, for department: {department} already exists in course offering having Id: {courseOffered.ID}')
                 
                 if offeringId == 0: #type: ignore
                     offeringId = courseOffered.ID # type: ignore
@@ -305,7 +325,8 @@ class AdminController:
                     
                     if sectionId == 0:
                         sectionId = AdminController.getSectionID(i.get('Section'), db)
-
+                        print(f'Section ID: {sectionId}')
+                        
                     courseAlreadyAllocated = db.query(CourseAllocation).filter(
                         CourseAllocation.OfferingID == offeringId, 
                         CourseAllocation.SECTION == sectionId,
@@ -315,6 +336,8 @@ class AdminController:
                     
                     if not courseAlreadyAllocated:
                          
+                        # print(f'Allocating teacher {teacherName} to course {courseCode} in section {i.get("Section")} with offering Id: {offeringId} ')
+                        
                         new_all = CourseAllocation(
                             TeacherID = teacherId,
                             OfferingID = offeringId,
@@ -323,22 +346,23 @@ class AdminController:
                             status = 'allocated'
                         )
                         # # Add in DB
-                        # db.add(new_all)
-                        # db.commit()
-                        # db.refresh(new_all)
+                        db.add(new_all)
+                        db.commit()
+                        db.refresh(new_all)
                         
                         allocationList.append(new_all)
                             
                         # print(f'Teacher {teacherName} allocated to course {courseCode} in section {i.get("Section")} with offering Id: {offeringId} ')
-                    # else:
-                    #     db.query(CourseAllocation).filter(CourseAllocation.ID == courseAlreadyAllocated.ID).update({CourseAllocation.status: 'allocated'})
-                    #     print(f'Teacher {teacherName} is already allocated to course {courseCode} in section {i.get("Section")} with offering Id: {offeringId}')
+                    else:
+                        db.query(CourseAllocation).filter(CourseAllocation.ID == courseAlreadyAllocated.ID).update({CourseAllocation.status: 'allocated'})
+                        # print(f'Teacher {teacherName} is already allocated to course {courseCode} in section {i.get("Section")} with offering Id: {offeringId}')
                         
-                # else:
-                #     print(f'No Teacher Id found against Teacher {teacherName}')
+                else:
+                    print(f'No Teacher Id found against Teacher {teacherName}')
                 
                 offeringId = 0
                 sectionId = 0
+                teacherId = 0
                 
             print('new allocation added in the list.. ')
                 
@@ -376,7 +400,7 @@ class AdminController:
         part1, part2 = section.split('-')
         section = part2[-1]
         
-        dep = 3 if part1.startswith('BAI') else 1 if part1.startswith('BSCS') else 2
+        dep = 3 if part1.startswith('BAI') else 1 if part1.startswith('BCS') else 2
         
         return db.query(Section.ID).filter(
             Section.department == dep, 
