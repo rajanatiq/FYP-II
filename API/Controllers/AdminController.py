@@ -165,9 +165,9 @@ class AdminController:
                                 EnrollmentDate = AdminController.getCurrentDate()
                             )
                             
-                            db.add(new_enrl)
-                            db.commit()
-                            db.refresh(new_enrl)
+                            # db.add(new_enrl)
+                            # db.commit()
+                            # db.refresh(new_enrl)
                             
                             print(f'new enrollment added for course {course_code} against student {stdId} having enrollment id {new_enrl.ID}')
                         else:

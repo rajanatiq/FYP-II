@@ -4,5 +4,6 @@ from typing import List
 from Schemas.McqAnswer import McqAnswer
 
 class StudentAnswer(BaseModel):
-    S_ID: int
-    answers: List[McqAnswer]   
+    Attempt_ID: int
+    M_ID: int
+    O_ID: int

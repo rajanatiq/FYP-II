@@ -13,8 +13,9 @@ root_dir = Path(__file__).resolve().parent.parent # Points to API Folder
 from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
 
 
+
 image_base_url = 'http://192.168.100.110:8000/images/'
-audio_base_url = 'http://192.168.100.110:8000/audios/'
+audio_base_url = 'http://192.168.41.188:8000/audios/'
 
 
 
@@ -360,7 +361,7 @@ class TeacherController:
                 e_type, attemptId = exam
                 status = ""
                 
-                if not e_type.lower() == "mcq":
+                if e_type.lower() == "mcq":
                     
                     all_records = db.query(StudentMCQExamAudioChunk).filter(
                         StudentMCQExamAudioChunk.attemptID == attemptId, 

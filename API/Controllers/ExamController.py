@@ -17,7 +17,7 @@ class ExamController:
     @staticmethod
     def fetch_mcqs(db: Session, exam_id: int):
         '''Method to fetch the mcq's of the exam for a particular exam. '''
-        
+
         rows = db.query(
             ExamMCQ.ID.label("mcqID"),
             ExamMCQ.DESCRIPTION.label("question"),
@@ -52,6 +52,53 @@ class ExamController:
         return {
             "content": list(mcq_map.values())
         }
+    # @staticmethod
+    # def fetch_mcqs(db: Session, exam_id: int):
+    #     rows = db.query(
+    #         ExamMCQ.ID.label("mcqID"),
+    #         ExamMCQ.DESCRIPTION.label("question"),
+    #         MCQOption.ID.label("optionID"),
+    #         MCQOption.OPTION_TEXT.label("optionText"),
+    #         MCQOption.IS_CORRECT.label("isCorrect")
+    #     ).join(
+    #         MCQOption, ExamMCQ.ID == MCQOption.M_ID
+    #     ).filter(
+    #         ExamMCQ.E_ID == exam_id
+    #     ).all()
+    #
+    #     if not rows:
+    #         return JSONResponse(content={"content": []}, status_code=404)
+    #
+    #     mcq_map = {}
+    #
+    #     for row in rows:
+    #         if row.mcqID not in mcq_map:
+    #             mcq_map[row.mcqID] = {
+    #                 "question": row.question,
+    #                 "options": []
+    #             }
+    #         if len(mcq_map[row.mcqID]["options"]) < 4:  # sirf 4 options lo
+    #             mcq_map[row.mcqID]["options"].append({
+    #                 "text": row.optionText,
+    #                 "isCorrect": row.isCorrect
+    #             })
+    #
+    #     result = []
+    #     for mcq in mcq_map.values():
+    #         options = mcq["options"]
+    #         sol = None
+    #         for i, opt in enumerate(options):
+    #             if opt["isCorrect"]:
+    #                 sol = f"op{i + 1}"
+    #                 break
+    #
+    #         item = {"q": mcq["question"], "sol": sol}
+    #         for i, opt in enumerate(options):
+    #             item[f"o{i + 1}"] = opt["text"]
+    #
+    #         result.append(item)
+    #
+    #     return {"content": result}
     
     
     @staticmethod

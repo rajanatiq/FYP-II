@@ -1138,57 +1138,60 @@ class ProctoringController:
     @staticmethod
     async def detect_objects(file: UploadFile, attempt_id: int, time: str, db: Session):
 
-        contents = await file.read()
-        
-        image_array = ProctoringController.bytes_to_numpy(contents)
+        try:
+            contents = await file.read()
 
-        server_path = await asyncio.to_thread(
-                    ProctoringController.saveImageOnServer, back_camera_base_folder , contents, attempt_id, time
-                )
-        print(f'image save at {server_path}')
-        
-        results = object_detection_model(image_array)
+            image_array = ProctoringController.bytes_to_numpy(contents)
 
-        detected_flag = False
-        detected_objects = []
+            server_path = await asyncio.to_thread(
+                        ProctoringController.saveImageOnServer, back_camera_base_folder , contents, attempt_id, time
+                    )
+            print(f'image save at {server_path}')
 
-        for r in results:
-            for box in r.boxes:
-                cls_id = int(box.cls[0])
-                label = object_detection_model.names[cls_id]
+            results = object_detection_model(image_array)
 
-                if label in cheating_objects:
-                    detected_flag = True
+            detected_flag = False
+            detected_objects = []
 
-                    if label not in detected_objects:
-                        detected_objects.append(label)
-        
-        
-        if detected_objects:
-            print("No cheating objects detected.")
-            
-            objects = ""
-            for obj in detected_objects:
-                objects += obj + ","
-                print(f"Detected cheating object: {obj}")   
-            try:
-                new_record = DetectedObjects(
-                    attemptID = attempt_id,
-                    objects = objects,
-                    timestamp = datetime.now(), 
-                    image_path = server_path
-                )
-                db.add(new_record)
-                db.commit()
-            except Exception as e:
-                db.rollback()
-                print(f"DB ERROR: {e}")
-                return {'fail': f'database error: {e}'}
-        
-        return {
-            "cheating_detected": detected_flag,
-            "detected_objects": detected_objects
-        }
+            for r in results:
+                for box in r.boxes:
+                    cls_id = int(box.cls[0])
+                    label = object_detection_model.names[cls_id]
+
+                    if label in cheating_objects:
+                        detected_flag = True
+
+                        if label not in detected_objects:
+                            detected_objects.append(label)
+
+
+            if detected_objects:
+                print("No cheating objects detected.")
+
+                objects = ""
+                for obj in detected_objects:
+                    objects += obj + ","
+                    print(f"Detected cheating object: {obj}")
+                try:
+                    new_record = DetectedObjects(
+                        attemptID = attempt_id,
+                        objects = objects,
+                        timestamp = datetime.now(),
+                        image_path = server_path
+                    )
+                    db.add(new_record)
+                    db.commit()
+                except Exception as e:
+                    db.rollback()
+                    print(f"DB ERROR: {e}")
+                    return {'fail': f'database error: {e}'}
+
+            return {
+                "cheating_detected": detected_flag,
+                "detected_objects": detected_objects
+            }
+        except Exception as e:
+            return {'fail': f'database error: {e}'}
     
     
     

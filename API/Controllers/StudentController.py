@@ -142,15 +142,14 @@ class StudentController:
 
     def Add_McqAnswer(data: StudentAnswer, db: Session):
         try:
-            for ans in data.answers:
                 record = MCQAns(
-                    M_ID=ans.M_ID,
-                    S_ID=data.S_ID,
-                    O_ID=ans.O_ID
+                    M_ID=data.M_ID,
+                    Attempt_ID=data.Attempt_ID,
+                    O_ID=data.O_ID
                 )
                 db.add(record)
-            db.commit()
-            return {"message": "Data inserted successfully"}
+                db.commit()
+                return {"message": "Data inserted successfully"}
         except Exception as e:
             db.rollback()
             print(f"DB insert error: {e}")
