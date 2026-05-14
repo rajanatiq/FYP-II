@@ -1,6 +1,6 @@
 import cv2
 from sqlalchemy.orm import Session
-from Models import (Users, Student, Teacher)
+from API.Models import (Users, Student, Teacher)
 from fastapi import UploadFile, File
 import numpy as np
 import os
