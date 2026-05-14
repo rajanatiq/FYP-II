@@ -1,4 +1,4 @@
-from db import Base
+from API.db import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 class MCQOption(Base):
