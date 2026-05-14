@@ -5,51 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="hsdg">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/ExamController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/ExamController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/StudentController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/StudentController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/TeacherController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/TeacherController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/UserController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/UserController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/CameraMonitoring.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/CameraMonitoring.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Course.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Course.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/CourseAllocation.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/CourseAllocation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/CourseEnrollment.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/CourseEnrollment.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/CourseOffering.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/CourseOffering.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Department.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Department.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/DesAns.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/DesAns.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/DetectedObjects.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/DetectedObjects.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Exam.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Exam.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/ExamAttempt.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/ExamAttempt.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/ExamDescQues.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/ExamDescQues.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/ExamMCQ.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/ExamMCQ.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/ExamRoom.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/ExamRoom.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/MCQAns.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/MCQAns.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/MCQOption.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/MCQOption.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/ProctoringEvent.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/ProctoringEvent.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Room.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Room.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/ScreenMonitoring.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/ScreenMonitoring.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Section.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Section.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Student.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Student.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/StudentBreak.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/StudentBreak.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/StudentDESCExamAudioChunk.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/StudentDESCExamAudioChunk.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/StudentExamLog.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/StudentExamLog.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/StudentMCQExamAudioChunk.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/StudentMCQExamAudioChunk.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/StudentSeating.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/StudentSeating.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Teacher.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Teacher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/TeacherRoomAssignment.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/TeacherRoomAssignment.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/Users.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/Users.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Models/VoiceMonitoring.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Models/VoiceMonitoring.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Routers/admin_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/admin_route.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Routers/exam_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/exam_route.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Routers/proctoring_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/proctoring_route.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Routers/student_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/student_route.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Routers/teacher_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/teacher_route.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Routers/user_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/user_route.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ML/LoginVerification/train_embeddings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ML/LoginVerification/train_embeddings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/StoredEmbeddings/2022-ARID-4079.npy" beforeDir="false" afterPath="$PROJECT_DIR$/StoredEmbeddings/2022-ARID-4079.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/StoredEmbeddings/4045.npy" beforeDir="false" afterPath="$PROJECT_DIR$/StoredEmbeddings/4045.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/req.txt" beforeDir="false" afterPath="$PROJECT_DIR$/req.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,6 +95,7 @@
       <workItem from="1778752398610" duration="2697000" />
       <workItem from="1778760111302" duration="12907000" />
       <workItem from="1778778349425" duration="641000" />
+      <workItem from="1778780318392" duration="88000" />
     </task>
     <task id="LOCAL-00001" summary="hsdg">
       <option name="closed" value="true" />
