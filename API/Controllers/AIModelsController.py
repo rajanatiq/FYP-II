@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import numpy as np
 import cv2
-from Ai_Models.pose_estimation_yaw_pitch.predict_pose import predict_pose
+# from Ai_Models.pose_estimation_yaw_pitch.predict_pose import predict_pose
 from ML.pose_estimation_yaw_pitch.Training.predict_pose import PoseEstimation
 
 
@@ -23,5 +23,5 @@ class AIModelsController:
             raise ValueError("Invalid image")
 
         # Call the prediction function from your separate file
-        pose = predict_pose(image)  # image instead of path
+        pose = PoseEstimation.predict_pose(image)  # image instead of path
         return pose
