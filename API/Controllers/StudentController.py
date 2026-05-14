@@ -3,10 +3,10 @@ from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
 # import Models
-from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Student, Teacher, Users, Course, Exam, ExamMCQ,MCQOption,MCQAns, ExamAttempt, Section)
+from API.Models import (CourseAllocation, CourseEnrollment, CourseOffering, Student, Teacher, Users, Course, Exam, ExamMCQ,MCQOption,MCQAns, ExamAttempt, Section)
 
-from Schemas.StudentAnswer import StudentAnswer
-from Schemas.McqAnswer import McqAnswer
+from API.Schemas.StudentAnswer import StudentAnswer
+from API.Schemas.McqAnswer import McqAnswer
 from sqlalchemy.orm import joinedload
 
 class StudentController:
