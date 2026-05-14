@@ -147,7 +147,7 @@ class StudentController:
         try:
                 record = MCQAns(
                     M_ID=data.M_ID,
-                    Attempt_ID=data.Attempt_ID,
+                    Attempt_ID=data.attemptID,
                     O_ID=data.O_ID
                 )
                 db.add(record)
