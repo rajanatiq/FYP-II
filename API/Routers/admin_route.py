@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Depends
 from sqlalchemy.orm import Session
-from db import get_db
-from Controllers.AdminController import AdminController
+from API.db import get_db
+from API.Controllers.AdminController import AdminController
 router = APIRouter()
 
 @router.post("/upload-course-enrollment/")
