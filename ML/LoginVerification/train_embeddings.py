@@ -2,8 +2,8 @@ import os
 import numpy as np
 from deepface import DeepFace
 
-DATASET_DIR = r"D:\FYP-II\EmbeddingsDataset"
-EMBEDDINGS_DIR = r"D:\FYP-II\StoredEmbeddings"
+DATASET_DIR = r"C:\FYP-II\EmbeddingsDataset"
+EMBEDDINGS_DIR = r"C:\FYP-II\StoredEmbeddings"
 
 os.makedirs(EMBEDDINGS_DIR, exist_ok=True)
 
