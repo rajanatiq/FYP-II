@@ -6,8 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="hsdg">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/AIModelsController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/AIModelsController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/AdminController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/AdminController.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/Controllers/ExamController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/ExamController.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/Controllers/StudentController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/StudentController.py" afterDir="false" />
@@ -50,11 +48,20 @@
       <change beforePath="$PROJECT_DIR$/API/Routers/user_route.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Routers/user_route.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/Schemas/StudentAnswer.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Schemas/StudentAnswer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/API/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/voice_samples/2022-ARID-4079.npy" beforeDir="false" afterPath="$PROJECT_DIR$/API/voice_samples/2022-ARID-4079.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/voice_samples/4043.npy" beforeDir="false" afterPath="$PROJECT_DIR$/API/voice_samples/4043.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/API/voice_samples/4045.npy" beforeDir="false" afterPath="$PROJECT_DIR$/API/voice_samples/4045.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ML/LoginVerification/train_embeddings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ML/LoginVerification/train_embeddings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/StoredEmbeddings/2022-ARID-4079.npy" beforeDir="false" afterPath="$PROJECT_DIR$/StoredEmbeddings/2022-ARID-4079.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/StoredEmbeddings/4045.npy" beforeDir="false" afterPath="$PROJECT_DIR$/StoredEmbeddings/4045.npy" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="273" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -88,6 +95,7 @@
     "Python.bulk_enroll.executor": "Run",
     "Python.test_voice.executor": "Run",
     "Python.train_embeddings.executor": "Run",
+    "Python.voice_verification.executor": "Run",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -132,7 +140,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1770105596002</updated>
-      <workItem from="1778752398610" duration="1337000" />
+      <workItem from="1778752398610" duration="2697000" />
+      <workItem from="1778760111302" duration="12320000" />
     </task>
     <task id="LOCAL-00001" summary="hsdg">
       <option name="closed" value="true" />
@@ -151,5 +160,10 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="hsdg" />
     <option name="LAST_COMMIT_MESSAGE" value="hsdg" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/FYP_II$train_embeddings.coverage" NAME="train_embeddings Coverage Results" MODIFIED="1778762214560" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ML/LoginVerification" />
+    <SUITE FILE_PATH="coverage/FYP_II$voice_verification.coverage" NAME="voice_verification Coverage Results" MODIFIED="1778766181734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/API" />
+    <SUITE FILE_PATH="coverage/FYP_II$bulk_enroll.coverage" NAME="bulk_enroll Coverage Results" MODIFIED="1778765935046" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/API" />
   </component>
 </project>
