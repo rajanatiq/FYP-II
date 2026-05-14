@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from db import Base  # adjust according to your project
+from API.db import Base  # adjust according to your project
 
 class DetectedObjects(Base):
     __tablename__ = "detectedobjects"
