@@ -18,7 +18,7 @@ import os
 from pathlib import Path
 from deepface import DeepFace
 from retinaface import RetinaFace
-from Controllers.UserController import UserController
+from API.Controllers.UserController import UserController
 from datetime import datetime
 import asyncio
 import mediapipe as mp
@@ -34,7 +34,7 @@ yolo_model_path = str(root_dir.parent / "ML/ObjectDetection/yolov8n.pt")
 object_detection_model = YOLO(yolo_model_path)
 
 # import Models
-from Models import (ProctoringEvent, CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk, DetectedObjects)
+from API.Models import (ProctoringEvent, CameraMonitoring, ScreenMonitoring, StudentExamLog, ExamAttempt, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk, DetectedObjects)
 
 # tarined models for prediction
 from ML.FaceCount.faceCount import FaceCounter
