@@ -12,9 +12,9 @@ sys.path.append(str(root_path))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from db import SessionLocal
-from Routers import student_route, user_route, admin_route, proctoring_route, exam_route, teacher_route
-import Models
+from API.db import SessionLocal
+from API.Routers import student_route, user_route, admin_route, proctoring_route, exam_route, teacher_route
+import API.Models
 
 
 @asynccontextmanager
