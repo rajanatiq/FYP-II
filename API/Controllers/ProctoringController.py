@@ -1,5 +1,10 @@
 # lib imports
+import os
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_DATASETS_OFFLINE"] = "1"
+os.environ["HF_HUB_OFFLINE"] = "1"
 import io
+
 import re
 import numpy as np
 import cv2
@@ -50,6 +55,7 @@ try:
     # offline mode on karo taake sentence_transformers internet check na kare
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     os.environ["HF_DATASETS_OFFLINE"] = "1"
+    os.environ["HF_HUB_OFFLINE"] = "1"
     from sentence_transformers import CrossEncoder as _CrossEncoder
     _nli_model = _CrossEncoder("cross-encoder/nli-deberta-v3-base")
     print("[NLI] Transcript analysis model loaded.")
