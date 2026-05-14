@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AutoImportSettings">
+<<<<<<< HEAD
     <option name="autoReloadType" value="ALL" />
+=======
+    <option name="autoReloadType" value="SELECTIVE" />
+>>>>>>> my-local
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="hsdg" />
@@ -9,6 +13,9 @@
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="295" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -35,6 +42,7 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
+<<<<<<< HEAD
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -50,10 +58,40 @@
     "last_opened_file_path": "D:/FYP-II(Backend)/FYP-II",
     "node.js.selected.package.tslint": "(autodetect)",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+=======
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.NLI_Download.executor&quot;: &quot;Run&quot;,
+    &quot;Python.bulk_enroll.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_voice.executor&quot;: &quot;Run&quot;,
+    &quot;Python.train_embeddings.executor&quot;: &quot;Run&quot;,
+    &quot;Python.voice_verification.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;my-local&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/FYP-II&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+>>>>>>> my-local
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\FYP-II" />
       <recent name="D:\FYP-II\StoredEmbeddings" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -63,7 +101,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-0978a7220b69-9867c7d4c0a4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.28294.336" />
+        <option value="bundled-python-sdk-024ed6589d45-c2ffad84badb-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.23567.174" />
       </set>
     </attachedChunks>
   </component>
@@ -74,6 +112,10 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1770105596002</updated>
+      <workItem from="1778752398610" duration="2697000" />
+      <workItem from="1778760111302" duration="12907000" />
+      <workItem from="1778778349425" duration="641000" />
+      <workItem from="1778780318392" duration="563000" />
     </task>
     <task id="LOCAL-00001" summary="hsdg">
       <option name="closed" value="true" />
@@ -86,18 +128,16 @@
     <option name="localTasksCounter" value="2" />
     <servers />
   </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="hsdg" />
     <option name="LAST_COMMIT_MESSAGE" value="hsdg" />
   </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/API/Controllers/ProctoringController.py</url>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/FYP_II$train_embeddings.coverage" NAME="train_embeddings Coverage Results" MODIFIED="1778762214560" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ML/LoginVerification" />
+    <SUITE FILE_PATH="coverage/FYP_II$voice_verification.coverage" NAME="voice_verification Coverage Results" MODIFIED="1778766181734" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/API" />
+    <SUITE FILE_PATH="coverage/FYP_II$bulk_enroll.coverage" NAME="bulk_enroll Coverage Results" MODIFIED="1778765935046" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/API" />
   </component>
 </project>
