@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
-from db import get_db
-from Controllers.UserController import UserController
+from API.db import get_db
+from API.Controllers.UserController import UserController
 
 
 router = APIRouter()
