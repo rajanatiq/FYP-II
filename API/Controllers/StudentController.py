@@ -86,16 +86,20 @@ class StudentController:
             Exam.timeInMinutes.label("timeInMinutes"),
             Exam.STATUS.label('status'),
             Exam.E_TYPE.label('examType')
-        ).join(
-            CourseAllocation, CourseAllocation.ID == Exam.A_ID
-        ).join(
-            CourseOffering, CourseOffering.ID == CourseAllocation.OfferingID
-        ).join(
-            Course, Course.ID == CourseOffering.CourseID
         ).filter(
-            Course.ID == course_id, 
+            Exam.courseId == course_id,
             Exam.STATUS == "pending"
         )
+        # .join(
+        #     CourseAllocation, CourseAllocation.ID == Exam.A_ID
+        # ).join(
+        #     CourseOffering, CourseOffering.ID == CourseAllocation.OfferingID
+        # ).join(
+        #     Course, Course.ID == CourseOffering.CourseID
+        # ).filter(
+        #     Course.ID == course_id, 
+        #     Exam.STATUS == "pending"
+        # )
         if result:
             exams = [
                     {
