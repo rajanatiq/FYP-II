@@ -5,7 +5,7 @@ class Exam(Base):
     __tablename__ = 'exam' #
 
     ID = Column(Integer, primary_key=True)
-    A_ID = Column(Integer, ForeignKey('courseallocation.ID'))
+    courseId = Column(Integer, ForeignKey('course.ID'))
     TITLE = Column(String(50), nullable=False)
     TOTAL_QUESTIONS = Column(Integer)
     E_DATE = Column(DateTime)        # changed from Date to DateTime
@@ -14,7 +14,7 @@ class Exam(Base):
     # STATUS = Column(String(7))
     STATUS: Mapped[str] = mapped_column(String(7))
     # Relationships
-    allocation_rship = relationship('CourseAllocation', back_populates='exam_rship')
+    course_rship = relationship('Course', back_populates='exam_rship')
     
     # Questions
     mcq_rship = relationship('ExamMCQ', back_populates='exam_rship') #

@@ -111,7 +111,8 @@ class TeacherController:
                     Exam.E_DATE.label('examDate'),
                     Exam.timeInMinutes.label('timeInMinutes'),
                     func.count(distinct(ExamAttempt.studentID)).label('appearedStudents')
-                 ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
+                #  ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
+                 ).join(Course, Course.ID== Exam.courseId
                  ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
                  ).outerjoin(ExamAttempt, ExamAttempt.examID == Exam.ID
                  ).filter(

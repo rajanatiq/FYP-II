@@ -13,3 +13,4 @@ class Course(Base):
 
     # One Course can have many Offerings
     offering_rship = relationship('CourseOffering', back_populates='course_rship')
+    exam_rship = relationship('Exam', back_populates='course_rship')

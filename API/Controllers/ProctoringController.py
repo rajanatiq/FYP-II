@@ -1235,7 +1235,8 @@ class ProctoringController:
             is_present = False
             eye_gaze = None
             server_path = None
-
+            is_suspicious = False
+            
             if face_count > 1:
                 # Multiple faces - sirf image save karo, ML skip karo
                 server_path = await asyncio.to_thread(
@@ -1243,6 +1244,7 @@ class ProctoringController:
                 )
                 is_present = True
                 position = "Multiple faces detected"
+                is_suspicious = True
 
             elif face_count == 0:
                 # No face - sirf image save karo, ML skip karo
@@ -1250,6 +1252,7 @@ class ProctoringController:
                     ProctoringController.saveImageOnServer, pictures_base_folder, image_bytes, attempt_id, time
                 )
                 is_present = False
+                is_suspicious = True
                 position = "no face detected"
 
             else:
@@ -1267,8 +1270,11 @@ class ProctoringController:
                     if identity_verified:
                         position = str(pose)
                         is_present = True
+                        is_suspicious = True if pose != "STRAIGHT" and eye_gaze != "CENTER" else True if eye_gaze != "CENTER" else False
+                        
                     else:
                         position = "identity mismatched"
+                        is_suspicious = True
                         is_present = False
 
                 except Exception as e:
@@ -1284,7 +1290,8 @@ class ProctoringController:
                     position=position,
                     isPresent=is_present,
                     image_path=server_path,
-                    eye_gaze=eye_gaze
+                    eye_gaze=eye_gaze,
+                    is_suspicious = is_suspicious
                 )
                 db.add(new_record)
                 db.commit()
@@ -1299,3 +1306,7 @@ class ProctoringController:
             db.rollback()
             print(f'ERROR: {e}')
             return {'fail': f'ERROR: {e}'}
+
+
+
+

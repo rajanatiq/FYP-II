@@ -19,4 +19,4 @@ class CourseAllocation(Base):
     section_rship = relationship('Section', back_populates='allocation_rship')
 
     # NEW Relationship
-    exam_rship = relationship('Exam', back_populates='allocation_rship') #
+    # exam_rship = relationship('Exam', back_populates='allocation_rship') #
