@@ -1,16 +1,16 @@
 from typing import List
 
 from Schemas.SaveMcqAns import SaveMcqAns
-from Models import (ExamAttempt, MCQOption, ExamDescQues, ExamMCQ, Exam, MCQAns)
+from API.Models import (ExamAttempt, MCQOption, ExamDescQues, ExamMCQ, Exam, MCQAns)
 # from Models import MCQOption
 # from Models import ExamDescQues
 from fastapi import UploadFile
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 # from Models.Exam import Exam
-from Schemas.ExamCreate import ExamCreate
-from Schemas.ExamMcqCreate import ExamMCQCreate, MCQOptionCreate
-from Schemas.AttemptedExam import AttemptedExam
+from API.Schemas.ExamCreate import ExamCreate
+from API.Schemas.ExamMcqCreate import ExamMCQCreate, MCQOptionCreate
+from API.Schemas.AttemptedExam import AttemptedExam
 # from Models.ExamMCQ import ExamMCQ
 
 class ExamController:
