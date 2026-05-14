@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import extract, func, distinct, case, cast, Time
 from datetime import datetime
 from fastapi.responses import JSONResponse
-from Schemas.StudentLog import StudentLog
+from API.Schemas.StudentLog import StudentLog
 from pydub import AudioSegment
 import os
 
@@ -10,7 +10,7 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent # Points to API Folder 
 
 # import Models
-from Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
+from API.Models import (Exam,CourseAllocation,CourseOffering, Course, Teacher, Users, Section, Department, ExamAttempt, Student, StudentExamLog, StudentDESCExamAudioChunk, StudentMCQExamAudioChunk)
 
 
 
