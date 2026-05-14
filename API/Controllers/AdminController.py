@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 from fastapi import UploadFile 
-from Models import (CourseAllocation, CourseEnrollment, CourseOffering, Course, Teacher, Users, Section, Student, Department)
+from API.Models import (CourseAllocation, CourseEnrollment, CourseOffering, Course, Teacher, Users, Section, Student, Department)
 from io import BytesIO
 import pandas as pd
 from datetime import datetime
