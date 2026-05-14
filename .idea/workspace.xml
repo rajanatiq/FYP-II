@@ -1,19 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="7d6a35f9-e47c-49d7-84cd-f5277ee21109" name="Changes" comment="hsdg">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/AdminController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/AdminController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/ExamController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/ExamController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/ProctoringController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/StudentController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/StudentController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Controllers/TeacherController.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Controllers/TeacherController.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/Schemas/StudentAnswer.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/Schemas/StudentAnswer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/API/db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/API/temp.jpg" beforeDir="false" afterPath="$PROJECT_DIR$/API/temp.jpg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/StoredEmbeddings/10.npy" beforeDir="false" afterPath="$PROJECT_DIR$/StoredEmbeddings/4042.npy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/StoredEmbeddings/2022-ARID-4079.npy" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/StoredEmbeddings/6061.npy" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +25,10 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/API/Routers/user_route.py" root0="SKIP_INSPECTION" />
   </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -41,22 +37,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.NLI_Download.executor&quot;: &quot;Run&quot;,
-    &quot;Python.bulk_enroll.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_voice.executor&quot;: &quot;Run&quot;,
-    &quot;Python.train_embeddings.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/FYP-II(Backend)/FYP-II&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.NLI_Download.executor": "Run",
+    "Python.bulk_enroll.executor": "Run",
+    "Python.test_voice.executor": "Run",
+    "Python.train_embeddings.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "D:/FYP-II(Backend)/FYP-II",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\FYP-II\StoredEmbeddings" />
