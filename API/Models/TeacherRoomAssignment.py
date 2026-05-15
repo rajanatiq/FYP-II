@@ -1,5 +1,5 @@
 # Models/teacherroomassignment.py
-from API.db import Base
+from db import Base
 from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 

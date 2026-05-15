@@ -103,45 +103,99 @@ class TeacherController:
 
     @staticmethod
     def fetch_allocated_courses_exams(teacher_id: int , db:Session):
-        result=db.query( 
-                    CourseAllocation.ID.label('allocationID'), 
-                    Exam.ID.label("examID"),
-                    Exam.TITLE.label('examTitle'),
-                    Exam.STATUS.label('examStatus'),
-                    Exam.E_DATE.label('examDate'),
-                    Exam.timeInMinutes.label('timeInMinutes'),
-                    func.count(distinct(ExamAttempt.studentID)).label('appearedStudents')
-                 ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
-                 ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
-                 ).outerjoin(ExamAttempt, ExamAttempt.examID == Exam.ID
-                 ).filter(
-                    Teacher.ID == teacher_id,
-                    CourseAllocation.status == 'allocated'
-                ).group_by(
-                    CourseAllocation.ID,
-                    Exam.ID,
-                    Exam.TITLE,
-                    Exam.STATUS, 
-                    Exam.E_DATE,
-                    Exam.timeInMinutes
-                ).all()
+        try:
+            
+            
+            # SELECT DISTINCT e.*
+            # from course c
+            # join CourseOffering co on co.CourseID = c.ID
+            # join CourseAllocation ca on ca.OfferingID = co.ID
+            # join Teacher t on t.ID = ca.TeacherID
+            # join Exam e on e.courseId = c.ID
+            # WHERE t.id = 2 and ca.[status] = 'allocated'
+            result = db.query(
+                Exam.ID.label("examID"),
+                Exam.TITLE.label("examTitle"),
+                Exam.STATUS.label("examStatus"),
+                Exam.E_DATE.label("examDate"),
+                Exam.timeInMinutes.label("timeInMinutes")
+            ).join(
+                Course, Course.ID == Exam.courseId
+            ).join(
+                CourseOffering, CourseOffering.CourseID == Course.ID
+            ).join(
+                CourseAllocation, CourseAllocation.OfferingID == CourseOffering.ID
+            ).join(
+                Teacher, Teacher.ID == CourseAllocation.TeacherID
+            ).filter(
+                Teacher.ID == teacher_id,
+                CourseAllocation.status == "allocated"
+            ).group_by(
+                Exam.ID,
+                Exam.TITLE,
+                Exam.STATUS,
+                Exam.E_DATE,
+                Exam.timeInMinutes
+            )
+            
+            if not result:
+                return {'error': 'no exams  found'}
+            else:
+                return [
+                    {
+                        "examID": exam.examID,
+                        "examDate": exam.examDate,
+                        "examTitle": exam.examTitle,
+                        "examStatus": exam.examStatus,
+                        "timeInMinutes": exam.timeInMinutes
+                    }
+                    for exam in result
+                ]
+        except Exception as e:
+            db.rollback()
+            return {"error": f"Database error: {str(e)}"}, 500
+    # @staticmethod
+    # def fetch_allocated_courses_exams(teacher_id: int , db:Session):
+    #     result=db.query( 
+    #                 CourseAllocation.ID.label('allocationID'), 
+    #                 Exam.ID.label("examID"),
+    #                 Exam.TITLE.label('examTitle'),
+    #                 Exam.STATUS.label('examStatus'),
+    #                 Exam.E_DATE.label('examDate'),
+    #                 Exam.timeInMinutes.label('timeInMinutes'),
+    #                 func.count(distinct(ExamAttempt.studentID)).label('appearedStudents')
+    #             #  ).join(CourseAllocation, CourseAllocation.ID==Exam.A_ID
+    #              ).join(Course, Course.ID== Exam.courseId
+    #              ).join(Teacher, Teacher.ID==CourseAllocation.TeacherID
+    #              ).outerjoin(ExamAttempt, ExamAttempt.examID == Exam.ID
+    #              ).filter(
+    #                 Teacher.ID == teacher_id,
+    #                 CourseAllocation.status == 'allocated'
+    #             ).group_by(
+    #                 CourseAllocation.ID,
+    #                 Exam.ID,
+    #                 Exam.TITLE,
+    #                 Exam.STATUS, 
+    #                 Exam.E_DATE,
+    #                 Exam.timeInMinutes
+    #             ).all()
                  
-        if not result:
-            return {'error': 'no exams  found'}
-        else:
-            return [
-                {
-                    "allocationID": exam.allocationID,
-                    "examID": exam.examID,
-                    "examDate": exam.examDate,
-                    "examTitle": exam.examTitle,
-                    "examStatus": exam.examStatus,
-                    "appearedStudents": exam.appearedStudents,
-                    "timeInMinutes": exam.timeInMinutes
+    #     if not result:
+    #         return {'error': 'no exams  found'}
+    #     else:
+    #         return [
+    #             {
+    #                 "allocationID": exam.allocationID,
+    #                 "examID": exam.examID,
+    #                 "examDate": exam.examDate,
+    #                 "examTitle": exam.examTitle,
+    #                 "examStatus": exam.examStatus,
+    #                 "appearedStudents": exam.appearedStudents,
+    #                 "timeInMinutes": exam.timeInMinutes
                     
-                }
-                for exam in result
-            ]
+    #             }
+    #             for exam in result
+    #         ]
             
     @staticmethod 
     def appearedStudentsinExam(exam_id: int, db: Session):

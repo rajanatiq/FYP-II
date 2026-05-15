@@ -1,4 +1,4 @@
-from API.db import Base
+from db import Base
 from datetime import datetime
 from sqlalchemy import text, String, ForeignKey, Boolean, DateTime, func
 from sqlalchemy.orm import relationship,Mapped, mapped_column
@@ -34,6 +34,7 @@ class StudentExamLog(Base):
 
     image_path: Mapped[str] = mapped_column(String(100))
     eye_gaze: Mapped[str] = mapped_column(String(10))
+    is_suspicious: Mapped[bool] = mapped_column(Boolean, default=False)
     
     examAttempt_rship = relationship("ExamAttempt", back_populates="log_rship")
 

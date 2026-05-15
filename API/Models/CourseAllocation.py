@@ -1,4 +1,4 @@
-from API.db import Base
+from db import Base
 from sqlalchemy import Column, Integer, ForeignKey, Date, String
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -19,4 +19,4 @@ class CourseAllocation(Base):
     section_rship = relationship('Section', back_populates='allocation_rship')
 
     # NEW Relationship
-    exam_rship = relationship('Exam', back_populates='allocation_rship') #
+    # exam_rship = relationship('Exam', back_populates='allocation_rship') #

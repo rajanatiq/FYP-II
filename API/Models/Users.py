@@ -1,4 +1,4 @@
-from API.db import Base
+from db import Base
 from sqlalchemy import Column, Integer, String, Date, LargeBinary
 from sqlalchemy.orm import relationship
 

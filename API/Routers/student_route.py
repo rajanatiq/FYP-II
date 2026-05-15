@@ -1,9 +1,9 @@
 from fastapi import APIRouter, File, Request, Depends, UploadFile
 from sqlalchemy.orm import Session
-from API.db import get_db
-from API.Controllers.UserController import UserController
-from API.Controllers.StudentController import StudentController
-from API.Schemas.StudentAnswer import StudentAnswer
+from db import get_db
+from Controllers.UserController import UserController
+from Controllers.StudentController import StudentController
+from Schemas.StudentAnswer import StudentAnswer
 
 router = APIRouter()
 

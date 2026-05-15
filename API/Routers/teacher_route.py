@@ -1,8 +1,8 @@
-from API.Controllers.TeacherController import TeacherController
+from Controllers.TeacherController import TeacherController
 from fastapi import APIRouter, File, Request, Depends, UploadFile, Form
 from sqlalchemy.orm import Session
-from API.db import get_db
-from API.Schemas.StudentLog import StudentLog
+from db import get_db
+from Schemas.StudentLog import StudentLog
 router = APIRouter()
 
 @router.get("/course-allocation/{course_id}/{teacher_id}")

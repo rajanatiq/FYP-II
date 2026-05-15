@@ -1,11 +1,11 @@
 
-from API.Controllers.ProctoringController import ProctoringController
+from Controllers.ProctoringController import ProctoringController
 # from Controllers.AIModelsController import AIModelsController
 
 
 from fastapi import APIRouter, File, Request, Depends, UploadFile, Form
 from sqlalchemy.orm import Session
-from API.db import get_db
+from db import get_db
 router = APIRouter()
 
 @router.post('/FaceMonitoring')

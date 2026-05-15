@@ -1,13 +1,13 @@
 from typing import List
-from API.Schemas.ExamMcqCreate import ExamMCQCreate
-from API.Schemas.ExamCreate import ExamCreate
-from API.Schemas.SaveMcqAns import SaveMcqAns
+from Schemas.ExamMcqCreate import ExamMCQCreate
+from Schemas.ExamCreate import ExamCreate
+from Schemas.SaveMcqAns import SaveMcqAns
 from fastapi import APIRouter, File, Request, Depends, UploadFile
 from sqlalchemy.orm import Session
-from API.db import get_db
-from API.Controllers.ExamController import ExamController
-from API.Controllers.StudentController import StudentController
-from API.Schemas.AttemptedExam import AttemptedExam
+from db import get_db
+from Controllers.ExamController import ExamController
+from Controllers.StudentController import StudentController
+from Schemas.AttemptedExam import AttemptedExam
 router = APIRouter()
 
 session = Depends(get_db)

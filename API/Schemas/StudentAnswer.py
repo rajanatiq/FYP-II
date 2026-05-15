@@ -1,7 +1,7 @@
 # Schemas/StudentAnswer.py
 from pydantic import BaseModel
 from typing import List
-from API.Schemas.McqAnswer import McqAnswer
+from Schemas.McqAnswer import McqAnswer
 
 class StudentAnswer(BaseModel):
     attemptID: int
