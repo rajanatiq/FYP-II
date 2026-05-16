@@ -4,24 +4,32 @@ from sqlalchemy.orm import relationship, mapped_column, Mapped
 class Exam(Base):
     __tablename__ = 'exam' #
 
+<<<<<<< Updated upstream
     ID = Column(Integer, primary_key=True)
+=======
+    D = Column(Integer, primary_key=True)
+>>>>>>> Stashed changes
     courseId = Column(Integer, ForeignKey('course.ID'))
     TITLE = Column(String(50), nullable=False)
     TOTAL_QUESTIONS = Column(Integer)
-    E_DATE = Column(DateTime)        # changed from Date to DateTime
-    timeInMinutes = Column(Integer)     # new column for exam duration in hours
+    E_DATE = Column(DateTime)  # changed from Date to DateTime
+    timeInMinutes = Column(Integer)  # new column for exam duration in hours
     E_TYPE = Column(String(6))
     # STATUS = Column(String(7))
     STATUS: Mapped[str] = mapped_column(String(7))
     # Relationships
     course_rship = relationship('Course', back_populates='exam_rship')
+<<<<<<< Updated upstream
     
+=======
+
+>>>>>>> Stashed changes
     # Questions
-    mcq_rship = relationship('ExamMCQ', back_populates='exam_rship') #
-    desc_ques_rship = relationship('ExamDescQues', back_populates='exam_rship') #
-    
+    mcq_rship = relationship('ExamMCQ', back_populates='exam_rship')  #
+    desc_ques_rship = relationship('ExamDescQues', back_populates='exam_rship')  #
+
     # Proctoring
-    proctoring_rship = relationship('ProctoringEvent', back_populates='exam_rship') #
+    proctoring_rship = relationship('ProctoringEvent', back_populates='exam_rship')  #
 
     student_seatings = relationship('StudentSeating', back_populates='exam_rship')
     break_rship = relationship('StudentBreak', back_populates='exam_rship')
