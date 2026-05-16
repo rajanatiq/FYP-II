@@ -1,5 +1,5 @@
 # Models/studentbreak.py
-from db import Base
+from API.db import Base
 from sqlalchemy import Column, Integer, ForeignKey, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
