@@ -4,10 +4,10 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 import urllib
 
 username = "sa"
-password = "Macbookpro2019"
+password = "12345"
 # password="123"
 # DESKTOP-OGHME3K\SQLEXPRESS
-server = "localhost"           # SQL Server instance
+server = "MyPC\SQLEXPRESS"           # SQL Server instance
 
 # server="DESKTOP-OGHME3K\SQLEXPRESS"
 database = "ExamProctoring"
